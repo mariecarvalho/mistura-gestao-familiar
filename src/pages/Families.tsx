@@ -5,15 +5,38 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash2, Users } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { FamilyFormModal } from '@/components/families/FamilyFormModal';
+import { FamilyDeleteModal } from '@/components/families/FamilyDeleteModal';
 
 export function Families() {
-  const { families, removeFamily } = useAppStore();
+  const { families } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedFamily, setSelectedFamily] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
   const filteredFamilies = families.filter(family =>
     family.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     family.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleCreateFamily = () => {
+    setModalMode('create');
+    setSelectedFamily(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEditFamily = (family: any) => {
+    setModalMode('edit');
+    setSelectedFamily(family);
+    setIsFormModalOpen(true);
+  };
+
+  const handleDeleteFamily = (family: any) => {
+    setSelectedFamily(family);
+    setIsDeleteModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -24,7 +47,10 @@ export function Families() {
             Gerencie as famílias beneficiadas pelo projeto
           </p>
         </div>
-        <Button className="bg-warm-orange hover:bg-warm-orange/90">
+        <Button 
+          className="bg-warm-orange hover:bg-warm-orange/90"
+          onClick={handleCreateFamily}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nova Família
         </Button>
@@ -54,7 +80,10 @@ export function Families() {
               <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'Tente buscar com outros termos.' : 'Comece cadastrando sua primeira família.'}
               </p>
-              <Button className="bg-warm-orange hover:bg-warm-orange/90">
+              <Button 
+                className="bg-warm-orange hover:bg-warm-orange/90"
+                onClick={handleCreateFamily}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Cadastrar Família
               </Button>
@@ -93,14 +122,19 @@ export function Families() {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditFamily(family)}
+                      >
                         <Edit className="h-4 w-4 mr-1" />
                         Editar
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => removeFamily(family.id)}
+                        onClick={() => handleDeleteFamily(family)}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -113,6 +147,19 @@ export function Families() {
           )}
         </CardContent>
       </Card>
+
+      <FamilyFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        family={selectedFamily}
+        mode={modalMode}
+      />
+
+      <FamilyDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        family={selectedFamily}
+      />
     </div>
   );
 }

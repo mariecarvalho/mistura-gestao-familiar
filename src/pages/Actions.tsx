@@ -4,17 +4,40 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Calendar, MapPin, Users } from 'lucide-react';
+import { Plus, Search, Calendar, MapPin, Users, Edit, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { ActionFormModal } from '@/components/actions/ActionFormModal';
+import { ActionDeleteModal } from '@/components/actions/ActionDeleteModal';
 
 export function Actions() {
   const { actions } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
   const filteredActions = actions.filter(action =>
     action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     action.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleCreateAction = () => {
+    setModalMode('create');
+    setSelectedAction(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEditAction = (action: any) => {
+    setModalMode('edit');
+    setSelectedAction(action);
+    setIsFormModalOpen(true);
+  };
+
+  const handleDeleteAction = (action: any) => {
+    setSelectedAction(action);
+    setIsDeleteModalOpen(true);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,7 +68,10 @@ export function Actions() {
             Gerencie as ações de distribuição de marmitas
           </p>
         </div>
-        <Button className="bg-warm-orange hover:bg-warm-orange/90">
+        <Button 
+          className="bg-warm-orange hover:bg-warm-orange/90"
+          onClick={handleCreateAction}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nova Ação
         </Button>
@@ -75,7 +101,10 @@ export function Actions() {
               <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'Tente buscar com outros termos.' : 'Comece planejando sua primeira ação.'}
               </p>
-              <Button className="bg-warm-orange hover:bg-warm-orange/90">
+              <Button 
+                className="bg-warm-orange hover:bg-warm-orange/90"
+                onClick={handleCreateAction}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Planejar Ação
               </Button>
@@ -121,11 +150,22 @@ export function Actions() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        Ver Detalhes
-                      </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditAction(action)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
                         Editar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteAction(action)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Excluir
                       </Button>
                       {action.status === 'planned' && (
                         <Button size="sm" className="bg-warm-orange hover:bg-warm-orange/90">
@@ -140,6 +180,19 @@ export function Actions() {
           )}
         </CardContent>
       </Card>
+
+      <ActionFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        action={selectedAction}
+        mode={modalMode}
+      />
+
+      <ActionDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        action={selectedAction}
+      />
     </div>
   );
 }

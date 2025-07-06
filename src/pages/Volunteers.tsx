@@ -4,17 +4,40 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, UserCheck, Mail, Phone } from 'lucide-react';
+import { Plus, Search, UserCheck, Mail, Phone, Edit, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { VolunteerFormModal } from '@/components/volunteers/VolunteerFormModal';
+import { VolunteerDeleteModal } from '@/components/volunteers/VolunteerDeleteModal';
 
 export function Volunteers() {
-  const { volunteers, removeVolunteer } = useAppStore();
+  const { volunteers } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
   const filteredVolunteers = volunteers.filter(volunteer =>
     volunteer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     volunteer.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleCreateVolunteer = () => {
+    setModalMode('create');
+    setSelectedVolunteer(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEditVolunteer = (volunteer: any) => {
+    setModalMode('edit');
+    setSelectedVolunteer(volunteer);
+    setIsFormModalOpen(true);
+  };
+
+  const handleDeleteVolunteer = (volunteer: any) => {
+    setSelectedVolunteer(volunteer);
+    setIsDeleteModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -25,7 +48,10 @@ export function Volunteers() {
             Gerencie os voluntários do projeto
           </p>
         </div>
-        <Button className="bg-warm-orange hover:bg-warm-orange/90">
+        <Button 
+          className="bg-warm-orange hover:bg-warm-orange/90"
+          onClick={handleCreateVolunteer}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Novo Voluntário
         </Button>
@@ -55,7 +81,10 @@ export function Volunteers() {
               <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'Tente buscar com outros termos.' : 'Comece cadastrando seu primeiro voluntário.'}
               </p>
-              <Button className="bg-warm-orange hover:bg-warm-orange/90">
+              <Button 
+                className="bg-warm-orange hover:bg-warm-orange/90"
+                onClick={handleCreateVolunteer}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Cadastrar Voluntário
               </Button>
@@ -97,7 +126,7 @@ export function Volunteers() {
                       <div className="mb-4">
                         <p className="text-sm font-medium text-foreground mb-2">Habilidades:</p>
                         <div className="flex flex-wrap gap-1">
-                          {volunteer.skills.map((skill, index) => (
+                          {volunteer.skills.map((skill: string, index: number) => (
                             <Badge key={index} variant="secondary" className="text-xs">
                               {skill}
                             </Badge>
@@ -107,16 +136,22 @@ export function Volunteers() {
                     )}
                     
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditVolunteer(volunteer)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
                         Editar
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => removeVolunteer(volunteer.id)}
+                        onClick={() => handleDeleteVolunteer(volunteer)}
                         className="text-destructive hover:text-destructive"
                       >
-                        Remover
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>
@@ -126,6 +161,19 @@ export function Volunteers() {
           )}
         </CardContent>
       </Card>
+
+      <VolunteerFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        volunteer={selectedVolunteer}
+        mode={modalMode}
+      />
+
+      <VolunteerDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        volunteer={selectedVolunteer}
+      />
     </div>
   );
 }
