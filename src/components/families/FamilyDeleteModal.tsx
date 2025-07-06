@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
-import { familyService } from '@/services/api';
+import { familyService } from '@/services/api/family';
 
 interface FamilyDeleteModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export function FamilyDeleteModal({ isOpen, onClose, family }: FamilyDeleteModal
 
   const handleDelete = async () => {
     setIsLoading(true);
-    
+      console.log('family',family)
     try {
       await familyService.delete(family.id);
       removeFamily(family.id);

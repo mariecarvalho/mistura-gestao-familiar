@@ -11,8 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
-import { familyService } from '@/services/api';
+import { familyService } from '@/services/api/family';
 import { transformFamilyDataForAPI, transformAPIFamilyToForm } from '@/utils/dataTransformers';
+import { Family } from '@/models/Family';
 
 interface Child {
   name: string;
@@ -49,7 +50,7 @@ interface FamilyFormData {
 interface FamilyFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  family?: any;
+  family?: Family;
   mode: 'create' | 'edit';
 }
 
@@ -131,32 +132,21 @@ export function FamilyFormModal({ isOpen, onClose, family, mode }: FamilyFormMod
       const apiData = transformFamilyDataForAPI(data);
       
       if (mode === 'create') {
-        const response = await familyService.create(apiData);
-        addFamily({
-          id: response.id,
-          name: data.representative_name,
-          address: `${data.street}, ${data.number} - ${data.district}, ${data.city}/${data.state}`,
-          phone: data.contact_value,
-          members: data.people_count,
-          notes: data.contact_note,
-          isActive: data.benefit_status === 'active',
-          createdAt: new Date(),
-        });
-        
+        const response = await familyService.create(apiData);      
         toast({
           title: "Família cadastrada",
           description: "A família foi cadastrada com sucesso.",
         });
       } else {
         await familyService.update(family.id, apiData);
-        updateFamily(family.id, {
-          name: data.representative_name,
-          address: `${data.street}, ${data.number} - ${data.district}, ${data.city}/${data.state}`,
-          phone: data.contact_value,
-          members: data.people_count,
-          notes: data.contact_note,
-          isActive: data.benefit_status === 'active',
-        });
+        // updateFamily(family.id, {
+        //   name: data.representative_name,
+        //   address: `${data.street}, ${data.number} - ${data.district}, ${data.city}/${data.state}`,
+        //   phone: data.contact_value,
+        //   members: data.people_count,
+        //   notes: data.contact_note,
+        //   isActive: data.benefit_status === 'active',
+        // });
         
         toast({
           title: "Família atualizada",

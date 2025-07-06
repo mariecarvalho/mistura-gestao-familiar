@@ -1,3 +1,4 @@
+import { Child } from "@/models/Child";
 
 // Transformer para dados da família
 export const transformFamilyDataForAPI = (formData: any) => {
@@ -9,7 +10,6 @@ export const transformFamilyDataForAPI = (formData: any) => {
     children_count: parseInt(formData.children_count) || 0,
     current_benefit: formData.current_benefit || null,
     benefit_status: formData.benefit_status || 'active',
-    last_presence_date: formData.last_presence_date || null,
     presence_status: formData.presence_status || 'present',
     address: {
       street: formData.street || '',
@@ -24,10 +24,10 @@ export const transformFamilyDataForAPI = (formData: any) => {
       {
         contact_type: formData.contact_type || 'phone',
         contact_value: formData.contact_value || '',
-        note: formData.contact_note || '',
+        contact_note: formData.contact_note || '',
       }
     ],
-    children: formData.children?.map((child: any) => ({
+    children: formData.children?.map((child: Child) => ({
       name: child.name,
       birth_date: child.birth_date,
       relationship: child.relationship,
@@ -85,7 +85,7 @@ export const transformAPIFamilyToForm = (apiData: any) => {
     postal_code: apiData.address?.postal_code || '',
     contact_type: apiData.contacts?.[0]?.contact_type || 'phone',
     contact_value: apiData.contacts?.[0]?.contact_value || '',
-    contact_note: apiData.contacts?.[0]?.note || '',
+    contact_note: apiData.contacts?.[0]?.contact_note || '',
     children: apiData.children || [],
   };
 };

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
-import { actionService } from '@/services/api';
+import { actionService } from '@/services/api/actions';
 
 interface ActionDeleteModalProps {
   isOpen: boolean;

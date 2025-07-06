@@ -1,24 +1,42 @@
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash2, Users } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
 import { FamilyFormModal } from '@/components/families/FamilyFormModal';
 import { FamilyDeleteModal } from '@/components/families/FamilyDeleteModal';
+import { useEffect, useState } from 'react';
+import { familyService } from '@/services/api/family'
+import { Family } from '@/models/Family';
 
 export function Families() {
-  const { families } = useAppStore();
+const [families, setFamilies] = useState<Family[]>([]);
+const [isLoading, setIsLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedFamily, setSelectedFamily] = useState<any>(null);
+  const [selectedFamily, setSelectedFamily] = useState<Family>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
+  useEffect(() => {
+  const fetchFamilies = async () => {
+    try {
+      const response = await familyService.getAll();
+      setFamilies(response);
+    } catch (error) {
+      console.error('Erro ao buscar famílias:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchFamilies();
+}, []);
+
   const filteredFamilies = families.filter(family =>
-    family.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    family.address.toLowerCase().includes(searchTerm.toLowerCase())
+    family.representative_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    family.street.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateFamily = () => {
@@ -27,17 +45,18 @@ export function Families() {
     setIsFormModalOpen(true);
   };
 
-  const handleEditFamily = (family: any) => {
+  const handleEditFamily = (family: Family) => {
     setModalMode('edit');
     setSelectedFamily(family);
     setIsFormModalOpen(true);
   };
 
-  const handleDeleteFamily = (family: any) => {
+  const handleDeleteFamily = (family: Family) => {
     setSelectedFamily(family);
     setIsDeleteModalOpen(true);
   };
 
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -95,29 +114,29 @@ export function Families() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg text-foreground">{family.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{family.members} membros</p>
+                        <CardTitle className="text-lg text-foreground">{family.representative_name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{family.people_count} membros</p>
                       </div>
                       <div className={`px-2 py-1 rounded-full text-xs ${
-                        family.isActive 
+                        family.presence_status 
                           ? 'bg-soft-green text-green-800' 
                           : 'bg-muted text-muted-foreground'
                       }`}>
-                        {family.isActive ? 'Ativa' : 'Inativa'}
+                        {family.benefit_status ? 'Ativa' : 'Inativa'}
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-2 mb-4">
                       <p className="text-sm text-muted-foreground">
-                        <strong>Endereço:</strong> {family.address}
+                        <strong>Endereço:</strong> {family.street}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        <strong>Telefone:</strong> {family.phone}
+                        <strong>Telefone:</strong> {family.contact_value}
                       </p>
-                      {family.notes && (
+                      {family.contact_note && (
                         <p className="text-sm text-muted-foreground">
-                          <strong>Observações:</strong> {family.notes}
+                          <strong>Observações:</strong> {family.contact_note}
                         </p>
                       )}
                     </div>

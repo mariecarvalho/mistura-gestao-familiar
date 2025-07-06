@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
-import { actionService } from '@/services/api';
+import { actionService } from '@/services/api/actions';
 import { transformActionDataForAPI, transformAPIActionToForm } from '@/utils/dataTransformers';
 
 interface ActionFormData {
