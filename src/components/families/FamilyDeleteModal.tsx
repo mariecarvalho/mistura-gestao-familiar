@@ -1,7 +1,9 @@
 
+import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
+import { familyService } from '@/services/api';
 
 interface FamilyDeleteModalProps {
   isOpen: boolean;
@@ -11,15 +13,32 @@ interface FamilyDeleteModalProps {
 
 export function FamilyDeleteModal({ isOpen, onClose, family }: FamilyDeleteModalProps) {
   const { removeFamily } = useAppStore();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDelete = () => {
-    removeFamily(family.id);
-    toast({
-      title: "Família removida",
-      description: "A família foi removida com sucesso.",
-      variant: "destructive"
-    });
-    onClose();
+  const handleDelete = async () => {
+    setIsLoading(true);
+    
+    try {
+      await familyService.delete(family.id);
+      removeFamily(family.id);
+      
+      toast({
+        title: "Família removida",
+        description: "A família foi removida com sucesso.",
+        variant: "destructive"
+      });
+      
+      onClose();
+    } catch (error) {
+      console.error('Erro ao deletar família:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover família.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,9 +52,13 @@ export function FamilyDeleteModal({ isOpen, onClose, family }: FamilyDeleteModal
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-            Excluir
+          <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete} 
+            className="bg-destructive hover:bg-destructive/90"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Excluindo...' : 'Excluir'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
+import { familyService } from '@/services/api';
+import { transformFamilyDataForAPI, transformAPIFamilyToForm } from '@/utils/dataTransformers';
 
 interface FamilyFormData {
   representative_name: string;
@@ -41,47 +43,68 @@ interface FamilyFormModalProps {
 export function FamilyFormModal({ isOpen, onClose, family, mode }: FamilyFormModalProps) {
   const { addFamily, updateFamily } = useAppStore();
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<FamilyFormData>();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (family && mode === 'edit') {
-      setValue('representative_name', family.name);
-      setValue('people_count', family.members);
-      setValue('children_count', family.children || 0);
-      setValue('current_benefit', family.benefit || '');
-      setValue('benefit_status', family.benefitStatus || 'active');
-      setValue('presence_status', family.presenceStatus || 'present');
-      setValue('street', family.address || '');
-      setValue('contact_value', family.phone || '');
-      setValue('contact_type', 'phone');
+      const formData = transformAPIFamilyToForm(family);
+      Object.keys(formData).forEach((key) => {
+        setValue(key as keyof FamilyFormData, formData[key]);
+      });
     }
   }, [family, mode, setValue]);
 
-  const onSubmit = (data: FamilyFormData) => {
-    const familyData = {
-      name: data.representative_name,
-      address: `${data.street}, ${data.number} - ${data.district}, ${data.city}/${data.state}`,
-      phone: data.contact_value,
-      members: data.people_count,
-      notes: data.contact_note,
-      isActive: data.benefit_status === 'active',
-    };
+  const onSubmit = async (data: FamilyFormData) => {
+    setIsLoading(true);
+    
+    try {
+      const apiData = transformFamilyDataForAPI(data);
+      
+      if (mode === 'create') {
+        const response = await familyService.create(apiData);
+        addFamily({
+          id: response.id,
+          name: data.representative_name,
+          address: `${data.street}, ${data.number} - ${data.district}, ${data.city}/${data.state}`,
+          phone: data.contact_value,
+          members: data.people_count,
+          notes: data.contact_note,
+          isActive: data.benefit_status === 'active',
+        });
+        
+        toast({
+          title: "Família cadastrada",
+          description: "A família foi cadastrada com sucesso.",
+        });
+      } else {
+        await familyService.update(family.id, apiData);
+        updateFamily(family.id, {
+          name: data.representative_name,
+          address: `${data.street}, ${data.number} - ${data.district}, ${data.city}/${data.state}`,
+          phone: data.contact_value,
+          members: data.people_count,
+          notes: data.contact_note,
+          isActive: data.benefit_status === 'active',
+        });
+        
+        toast({
+          title: "Família atualizada",
+          description: "Os dados da família foram atualizados com sucesso.",
+        });
+      }
 
-    if (mode === 'create') {
-      addFamily(familyData);
+      reset();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao salvar família:', error);
       toast({
-        title: "Família cadastrada",
-        description: "A família foi cadastrada com sucesso.",
+        title: "Erro",
+        description: mode === 'create' ? "Erro ao cadastrar família." : "Erro ao atualizar família.",
+        variant: "destructive"
       });
-    } else {
-      updateFamily(family.id, familyData);
-      toast({
-        title: "Família atualizada",
-        description: "Os dados da família foram atualizados com sucesso.",
-      });
+    } finally {
+      setIsLoading(false);
     }
-
-    reset();
-    onClose();
   };
 
   return (
@@ -285,11 +308,11 @@ export function FamilyFormModal({ isOpen, onClose, family, mode }: FamilyFormMod
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90">
-              {mode === 'create' ? 'Cadastrar' : 'Atualizar'}
+            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90" disabled={isLoading}>
+              {isLoading ? 'Salvando...' : (mode === 'create' ? 'Cadastrar' : 'Atualizar')}
             </Button>
           </DialogFooter>
         </form>
