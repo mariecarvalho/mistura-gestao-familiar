@@ -3,6 +3,8 @@
 export const transformFamilyDataForAPI = (formData: any) => {
   return {
     representative_name: formData.representative_name,
+    representative_birth_date: formData.representative_birth_date,
+    representative_gender: formData.representative_gender,
     people_count: parseInt(formData.people_count),
     children_count: parseInt(formData.children_count) || 0,
     current_benefit: formData.current_benefit || null,
@@ -25,7 +27,12 @@ export const transformFamilyDataForAPI = (formData: any) => {
         note: formData.contact_note || '',
       }
     ],
-    children: formData.children || []
+    children: formData.children?.map((child: any) => ({
+      name: child.name,
+      birth_date: child.birth_date,
+      relationship: child.relationship,
+      gender: child.gender,
+    })) || []
   };
 };
 
@@ -39,6 +46,8 @@ export const transformActionDataForAPI = (formData: any) => {
     meals_planned: parseInt(formData.mealsPlanned) || 0,
     meals_distributed: parseInt(formData.mealsDistributed) || 0,
     status: formData.status || 'planned',
+    dish_of_the_day: formData.dish_of_the_day || '',
+    action_cost: parseFloat(formData.action_cost) || 0,
     volunteers: formData.volunteers || [],
     families: formData.families || [],
   };
@@ -60,6 +69,8 @@ export const transformVolunteerDataForAPI = (formData: any) => {
 export const transformAPIFamilyToForm = (apiData: any) => {
   return {
     representative_name: apiData.representative_name,
+    representative_birth_date: apiData.representative_birth_date,
+    representative_gender: apiData.representative_gender,
     people_count: apiData.people_count,
     children_count: apiData.children_count,
     current_benefit: apiData.current_benefit,
@@ -75,6 +86,7 @@ export const transformAPIFamilyToForm = (apiData: any) => {
     contact_type: apiData.contacts?.[0]?.contact_type || 'phone',
     contact_value: apiData.contacts?.[0]?.contact_value || '',
     contact_note: apiData.contacts?.[0]?.note || '',
+    children: apiData.children || [],
   };
 };
 
@@ -87,6 +99,8 @@ export const transformAPIActionToForm = (apiData: any) => {
     mealsPlanned: apiData.meals_planned,
     mealsDistributed: apiData.meals_distributed,
     status: apiData.status,
+    dish_of_the_day: apiData.dish_of_the_day,
+    action_cost: apiData.action_cost,
     volunteers: apiData.volunteers,
     families: apiData.families,
   };

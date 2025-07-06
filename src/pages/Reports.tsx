@@ -1,14 +1,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, PieChart, TrendingUp, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BarChart3, PieChart, TrendingUp } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { ReportGenerator } from '@/components/reports/ReportGenerator';
 
 export function Reports() {
   const { families, actions, volunteers } = useAppStore();
 
   const totalFamilies = families.length;
   const activeFamilies = families.filter(f => f.isActive).length;
+  const inactiveFamilies = families.filter(f => !f.isActive).length;
   const totalActions = actions.length;
   const completedActions = actions.filter(a => a.status === 'completed').length;
   const totalVolunteers = volunteers.length;
@@ -18,93 +19,106 @@ export function Reports() {
     .filter(action => action.mealsDistributed)
     .reduce((total, action) => total + (action.mealsDistributed || 0), 0);
 
+  const totalActionCost = actions
+    .filter(action => action.actionCost)
+    .reduce((total, action) => total + (action.actionCost || 0), 0);
+
   const averageMembersPerFamily = totalFamilies > 0 
     ? (families.reduce((sum, f) => sum + f.members, 0) / totalFamilies).toFixed(1)
     : 0;
 
+  // Métricas específicas - estimativas até termos dados reais
+  const familiesWithoutChildren = families.filter(f => f.members === 1).length;
+  const singleMothers = Math.floor(families.length * 0.3);
+  const elderlyFamilies = Math.floor(families.length * 0.2);
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Relatórios</h1>
-          <p className="text-muted-foreground">
-            Análises e estatísticas do Projeto Mistura Acolhe
-          </p>
-        </div>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Exportar Relatório
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Relatórios</h1>
+        <p className="text-muted-foreground">
+          Análises, estatísticas e exportação de dados do Projeto Mistura Acolhe
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Taxa de Famílias Ativas
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {totalFamilies > 0 ? Math.round((activeFamilies / totalFamilies) * 100) : 0}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {activeFamilies} de {totalFamilies} famílias
-            </p>
-          </CardContent>
-        </Card>
+      {/* Gerador de Relatórios */}
+      <div>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Gerar Relatórios</h2>
+        <ReportGenerator />
+      </div>
 
-        <Card className="border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Taxa de Conclusão
-            </CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {completedActions} de {totalActions} ações
-            </p>
-          </CardContent>
-        </Card>
+      {/* Métricas Principais */}
+      <div>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Métricas Principais</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Taxa de Famílias Ativas
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {totalFamilies > 0 ? Math.round((activeFamilies / totalFamilies) * 100) : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {activeFamilies} de {totalFamilies} famílias
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card className="border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Média de Membros
-            </CardTitle>
-            <PieChart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {averageMembersPerFamily}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              membros por família
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Taxa de Conclusão
+              </CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {completedActions} de {totalActions} ações
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card className="border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Voluntários Ativos
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {totalVolunteers > 0 ? Math.round((activeVolunteers / totalVolunteers) * 100) : 0}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {activeVolunteers} de {totalVolunteers} voluntários
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Média de Membros
+              </CardTitle>
+              <PieChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {averageMembersPerFamily}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                membros por família
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Voluntários Ativos
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {totalVolunteers > 0 ? Math.round((activeVolunteers / totalVolunteers) * 100) : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {activeVolunteers} de {totalVolunteers} voluntários
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -115,8 +129,12 @@ export function Reports() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                <span className="font-medium text-foreground">Total de Famílias</span>
-                <span className="text-foreground">{totalFamilies}</span>
+                <span className="font-medium text-foreground">Famílias Ativas</span>
+                <span className="text-foreground">{activeFamilies}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                <span className="font-medium text-foreground">Famílias Inativas</span>
+                <span className="text-foreground">{inactiveFamilies}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                 <span className="font-medium text-foreground">Total de Ações</span>
@@ -130,16 +148,50 @@ export function Reports() {
                 <span className="font-medium text-green-800">Marmitas Distribuídas</span>
                 <span className="font-bold text-green-800">{totalMealsDistributed}</span>
               </div>
+              <div className="flex justify-between items-center p-3 bg-green-100 rounded-lg">
+                <span className="font-medium text-green-800">Custo Total das Ações</span>
+                <span className="font-bold text-green-800">
+                  R$ {totalActionCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Ações por Status</CardTitle>
+            <CardTitle className="text-foreground">Análise Demográfica</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                <span className="font-medium text-foreground">Famílias sem Crianças</span>
+                <span className="text-foreground">{familiesWithoutChildren}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                <span className="font-medium text-foreground">Mães Solo (estimativa)</span>
+                <span className="text-foreground">{singleMothers}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                <span className="font-medium text-foreground">Famílias com Idosos (estimativa)</span>
+                <span className="text-foreground">{elderlyFamilies}</span>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Nota:</strong> Algumas métricas são estimativas e serão calculadas 
+                  precisamente quando os dados reais da API estiverem disponíveis.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-foreground">Ações por Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {['planned', 'in-progress', 'completed', 'cancelled'].map((status) => {
                 const count = actions.filter(a => a.status === status).length;
                 const percentage = totalActions > 0 ? (count / totalActions) * 100 : 0;
@@ -152,13 +204,14 @@ export function Reports() {
                 
                 return (
                   <div key={status} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-foreground">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-foreground">{count}</div>
+                      <div className="text-sm font-medium text-foreground">
                         {statusLabels[status as keyof typeof statusLabels]}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {count} ({Math.round(percentage)}%)
-                      </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {Math.round(percentage)}%
+                      </div>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div 

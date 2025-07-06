@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
+import { actionService } from '@/services/api';
+import { transformActionDataForAPI, transformAPIActionToForm } from '@/utils/dataTransformers';
 
 interface ActionFormData {
   title: string;
@@ -18,6 +20,8 @@ interface ActionFormData {
   mealsPlanned: number;
   mealsDistributed?: number;
   status: 'planned' | 'in-progress' | 'completed' | 'cancelled';
+  dish_of_the_day: string;
+  action_cost: number;
 }
 
 interface ActionFormModalProps {
@@ -30,48 +34,76 @@ interface ActionFormModalProps {
 export function ActionFormModal({ isOpen, onClose, action, mode }: ActionFormModalProps) {
   const { addAction, updateAction } = useAppStore();
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ActionFormData>();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (action && mode === 'edit') {
-      setValue('title', action.title);
-      setValue('description', action.description);
-      setValue('date', new Date(action.date).toISOString().split('T')[0]);
-      setValue('location', action.location);
-      setValue('mealsPlanned', action.mealsPlanned);
-      setValue('mealsDistributed', action.mealsDistributed || 0);
-      setValue('status', action.status);
+      const formData = transformAPIActionToForm(action);
+      Object.keys(formData).forEach((key) => {
+        setValue(key as keyof ActionFormData, formData[key]);
+      });
     }
   }, [action, mode, setValue]);
 
-  const onSubmit = (data: ActionFormData) => {
-    const actionData = {
-      title: data.title,
-      description: data.description,
-      date: new Date(data.date),
-      location: data.location,
-      mealsPlanned: data.mealsPlanned,
-      mealsDistributed: data.mealsDistributed,
-      status: data.status,
-      volunteers: [],
-      families: [],
-    };
+  const onSubmit = async (data: ActionFormData) => {
+    setIsLoading(true);
+    
+    try {
+      const apiData = transformActionDataForAPI(data);
+      
+      if (mode === 'create') {
+        const response = await actionService.create(apiData);
+        addAction({
+          id: response.id,
+          title: data.title,
+          description: data.description,
+          date: new Date(data.date),
+          location: data.location,
+          mealsPlanned: data.mealsPlanned,
+          mealsDistributed: data.mealsDistributed || 0,
+          status: data.status,
+          volunteers: [],
+          families: [],
+          dishOfTheDay: data.dish_of_the_day,
+          actionCost: data.action_cost,
+        });
+        
+        toast({
+          title: "Ação cadastrada",
+          description: "A ação foi cadastrada com sucesso.",
+        });
+      } else {
+        await actionService.update(action.id, apiData);
+        updateAction(action.id, {
+          title: data.title,
+          description: data.description,
+          date: new Date(data.date),
+          location: data.location,
+          mealsPlanned: data.mealsPlanned,
+          mealsDistributed: data.mealsDistributed || 0,
+          status: data.status,
+          dishOfTheDay: data.dish_of_the_day,
+          actionCost: data.action_cost,
+        });
+        
+        toast({
+          title: "Ação atualizada",
+          description: "Os dados da ação foram atualizados com sucesso.",
+        });
+      }
 
-    if (mode === 'create') {
-      addAction(actionData);
+      reset();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao salvar ação:', error);
       toast({
-        title: "Ação cadastrada",
-        description: "A ação foi cadastrada com sucesso.",
+        title: "Erro",
+        description: mode === 'create' ? "Erro ao cadastrar ação." : "Erro ao atualizar ação.",
+        variant: "destructive"
       });
-    } else {
-      updateAction(action.id, actionData);
-      toast({
-        title: "Ação atualizada",
-        description: "Os dados da ação foram atualizados com sucesso.",
-      });
+    } finally {
+      setIsLoading(false);
     }
-
-    reset();
-    onClose();
   };
 
   return (
@@ -132,7 +164,19 @@ export function ActionFormModal({ isOpen, onClose, action, mode }: ActionFormMod
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="dish_of_the_day">Prato do Dia *</Label>
+              <Input
+                id="dish_of_the_day"
+                {...register('dish_of_the_day', { required: 'Prato do dia é obrigatório' })}
+                placeholder="Ex: Frango com arroz e feijão"
+              />
+              {errors.dish_of_the_day && (
+                <p className="text-sm text-destructive">{errors.dish_of_the_day.message}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="mealsPlanned">Marmitas Planejadas *</Label>
                 <Input
@@ -155,6 +199,23 @@ export function ActionFormModal({ isOpen, onClose, action, mode }: ActionFormMod
                   {...register('mealsDistributed')}
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="action_cost">Custo da Ação (R$) *</Label>
+                <Input
+                  id="action_cost"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register('action_cost', { required: 'Custo da ação é obrigatório', min: 0 })}
+                  placeholder="0,00"
+                />
+                {errors.action_cost && (
+                  <p className="text-sm text-destructive">{errors.action_cost.message}</p>
+                )}
+              </div>
 
               <div>
                 <Label htmlFor="status">Status</Label>
@@ -174,11 +235,11 @@ export function ActionFormModal({ isOpen, onClose, action, mode }: ActionFormMod
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90">
-              {mode === 'create' ? 'Cadastrar' : 'Atualizar'}
+            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90" disabled={isLoading}>
+              {isLoading ? 'Salvando...' : (mode === 'create' ? 'Cadastrar' : 'Atualizar')}
             </Button>
           </DialogFooter>
         </form>
