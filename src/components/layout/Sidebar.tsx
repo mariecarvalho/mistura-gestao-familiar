@@ -7,7 +7,8 @@ import {
   UserCheck, 
   BarChart3,
   Menu,
-  Heart
+  ChefHat
+  // Heart // Mantendo comentado conforme solicitado
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
