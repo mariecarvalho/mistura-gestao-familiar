@@ -1,249 +1,200 @@
-
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useAppStore } from '@/store/useAppStore';
-import { toast } from '@/components/ui/use-toast';
-import { actionService } from '@/services/api/actions';
-import { transformActionDataForAPI, transformAPIActionToForm } from '@/utils/dataTransformers';
-
-interface ActionFormData {
-  title: string;
-  description: string;
-  date: string;
-  location: string;
-  mealsPlanned: number;
-  mealsDistributed?: number;
-  status: 'planned' | 'in-progress' | 'completed' | 'cancelled';
-  dish_of_the_day: string;
-  action_cost: number;
-}
+import React, { useState, useEffect } from 'react';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+  Textarea,
+  Select,
+  SelectItem,
+} from "@nextui-org/react";
+import { Action, ActionFormData } from '@/models/Action';
+import { createAction, updateAction } from '@/services/actionService';
 
 interface ActionFormModalProps {
+  action?: Action;
   isOpen: boolean;
   onClose: () => void;
-  action?: any;
-  mode: 'create' | 'edit';
+  onSave: () => void;
 }
 
-export function ActionFormModal({ isOpen, onClose, action, mode }: ActionFormModalProps) {
-  const { addAction, updateAction } = useAppStore();
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ActionFormData>();
-  const [isLoading, setIsLoading] = useState(false);
+export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormModalProps) {
+  const [formData, setFormData] = useState<ActionFormData>({
+    title: action?.title || '',
+    description: action?.description || '',
+    date: action?.date || '',
+    type: action?.type || '',
+    status: action?.status || 'Planejada',
+    volunteer_count: action?.volunteer_count || 0,
+    families_served: action?.families_served || 0,
+    dishOfTheDay: action?.dishOfTheDay || '',
+    actionCost: action?.actionCost || 0,
+  });
 
   useEffect(() => {
-    if (action && mode === 'edit') {
-      const formData = transformAPIActionToForm(action);
-      Object.keys(formData).forEach((key) => {
-        setValue(key as keyof ActionFormData, formData[key]);
+    if (action) {
+      setFormData({
+        title: action.title,
+        description: action.description,
+        date: action.date,
+        type: action.type,
+        status: action.status,
+        volunteer_count: action.volunteer_count,
+        families_served: action.families_served,
+        dishOfTheDay: action.dishOfTheDay,
+        actionCost: action.actionCost,
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        date: '',
+        type: '',
+        status: 'Planejada',
+        volunteer_count: 0,
+        families_served: 0,
+        dishOfTheDay: '',
+        actionCost: 0,
       });
     }
-  }, [action, mode, setValue]);
+  }, [action]);
 
-  const onSubmit = async (data: ActionFormData) => {
-    setIsLoading(true);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     try {
-      const apiData = transformActionDataForAPI(data);
-      
-      if (mode === 'create') {
-        const response = await actionService.create(apiData);
-        addAction({
-          id: response.id,
-          title: data.title,
-          description: data.description,
-          date: new Date(data.date),
-          location: data.location,
-          mealsPlanned: data.mealsPlanned,
-          mealsDistributed: data.mealsDistributed || 0,
-          status: data.status,
-          volunteers: [],
-          families: [],
-          dishOfTheDay: data.dish_of_the_day,
-          actionCost: data.action_cost,
-        });
-        
-        toast({
-          title: "Ação cadastrada",
-          description: "A ação foi cadastrada com sucesso.",
-        });
+      if (action) {
+        await updateAction(action.id, formData);
       } else {
-        await actionService.update(action.id, apiData);
-        updateAction(action.id, {
-          title: data.title,
-          description: data.description,
-          date: new Date(data.date),
-          location: data.location,
-          mealsPlanned: data.mealsPlanned,
-          mealsDistributed: data.mealsDistributed || 0,
-          status: data.status,
-          dishOfTheDay: data.dish_of_the_day,
-          actionCost: data.action_cost,
-        });
-        
-        toast({
-          title: "Ação atualizada",
-          description: "Os dados da ação foram atualizados com sucesso.",
-        });
+        await createAction(formData);
       }
-
-      reset();
+      
+      onSave();
       onClose();
     } catch (error) {
       console.error('Erro ao salvar ação:', error);
-      toast({
-        title: "Erro",
-        description: mode === 'create' ? "Erro ao cadastrar ação." : "Erro ao atualizar ação.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === 'create' ? 'Cadastrar Nova Ação' : 'Editar Ação'}
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Título da Ação *</Label>
+    <Modal isOpen={isOpen} onClose={onClose} backdrop="blur">
+      <ModalContent>
+        {(closeModal) => (
+          <form onSubmit={handleSubmit}>
+            <ModalHeader className="flex flex-col gap-1">
+              {action ? 'Editar Ação' : 'Nova Ação'}
+            </ModalHeader>
+            <ModalBody>
               <Input
-                id="title"
-                {...register('title', { required: 'Título é obrigatório' })}
-                placeholder="Ex: Distribuição de Marmitas - Centro"
+                type="text"
+                label="Título"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                isRequired
               />
-              {errors.title && (
-                <p className="text-sm text-destructive">{errors.title.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="description">Descrição</Label>
               <Textarea
-                id="description"
-                {...register('description')}
-                placeholder="Descreva os detalhes da ação..."
+                label="Descrição"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                isRequired
               />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="date">Data da Ação *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  {...register('date', { required: 'Data é obrigatória' })}
-                />
-                {errors.date && (
-                  <p className="text-sm text-destructive">{errors.date.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="location">Local *</Label>
-                <Input
-                  id="location"
-                  {...register('location', { required: 'Local é obrigatório' })}
-                  placeholder="Ex: Praça Central"
-                />
-                {errors.location && (
-                  <p className="text-sm text-destructive">{errors.location.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="dish_of_the_day">Prato do Dia *</Label>
               <Input
-                id="dish_of_the_day"
-                {...register('dish_of_the_day', { required: 'Prato do dia é obrigatório' })}
-                placeholder="Ex: Frango com arroz e feijão"
+                type="date"
+                label="Data"
+                name="date"
+                value={formData.date}
+                onChange={handleInputChange}
+                isRequired
               />
-              {errors.dish_of_the_day && (
-                <p className="text-sm text-destructive">{errors.dish_of_the_day.message}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="mealsPlanned">Marmitas Planejadas *</Label>
-                <Input
-                  id="mealsPlanned"
-                  type="number"
-                  min="1"
-                  {...register('mealsPlanned', { required: 'Número de marmitas é obrigatório', min: 1 })}
-                />
-                {errors.mealsPlanned && (
-                  <p className="text-sm text-destructive">{errors.mealsPlanned.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="mealsDistributed">Marmitas Distribuídas</Label>
-                <Input
-                  id="mealsDistributed"
-                  type="number"
-                  min="0"
-                  {...register('mealsDistributed')}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="action_cost">Custo da Ação (R$) *</Label>
-                <Input
-                  id="action_cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('action_cost', { required: 'Custo da ação é obrigatório', min: 0 })}
-                  placeholder="0,00"
-                />
-                {errors.action_cost && (
-                  <p className="text-sm text-destructive">{errors.action_cost.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select onValueChange={(value) => setValue('status', value as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planned">Planejada</SelectItem>
-                    <SelectItem value="in-progress">Em Andamento</SelectItem>
-                    <SelectItem value="completed">Concluída</SelectItem>
-                    <SelectItem value="cancelled">Cancelada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90" disabled={isLoading}>
-              {isLoading ? 'Salvando...' : (mode === 'create' ? 'Cadastrar' : 'Atualizar')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <Select
+                label="Tipo"
+                name="type"
+                selectedKeys={[formData.type]}
+                onSelectionChange={(value) => setFormData({ ...formData, type: value.currentKey || '' })}
+                isRequired
+              >
+                <SelectItem key="Distribuição de Alimentos" value="Distribuição de Alimentos">Distribuição de Alimentos</SelectItem>
+                <SelectItem key="Apoio Médico" value="Apoio Médico">Apoio Médico</SelectItem>
+                <SelectItem key="Apoio Jurídico" value="Apoio Jurídico">Apoio Jurídico</SelectItem>
+                <SelectItem key="Outro" value="Outro">Outro</SelectItem>
+              </Select>
+              <Select
+                label="Status"
+                name="status"
+                selectedKeys={[formData.status]}
+                onSelectionChange={(value) => setFormData({ ...formData, status: value.currentKey || '' })}
+                isRequired
+              >
+                <SelectItem key="Planejada" value="Planejada">Planejada</SelectItem>
+                <SelectItem key="Em Andamento" value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem key="Concluída" value="Concluída">Concluída</SelectItem>
+                <SelectItem key="Cancelada" value="Cancelada">Cancelada</SelectItem>
+              </Select>
+              <Input
+                type="number"
+                label="Número de Voluntários"
+                name="volunteer_count"
+                value={formData.volunteer_count?.toString()}
+                onChange={handleInputChange}
+                isRequired
+              />
+              <Input
+                type="number"
+                label="Número de Famílias Servidas"
+                name="families_served"
+                value={formData.families_served?.toString()}
+                onChange={handleInputChange}
+                isRequired
+              />
+               <Input
+                type="text"
+                label="Prato do Dia"
+                name="dishOfTheDay"
+                value={formData.dishOfTheDay}
+                onChange={handleInputChange}
+                
+              />
+               <Input
+                type="number"
+                label="Custo da Ação"
+                name="actionCost"
+                value={formData.actionCost?.toString()}
+                onChange={handleInputChange}
+                
+              />
+            </ModalBody>
+            <ModalFooter>
+              <Button color="danger" variant="flat" onPress={onClose}>
+                Cancelar
+              </Button>
+              <Button color="primary" type="submit">
+                {action ? 'Salvar' : 'Criar'}
+              </Button>
+            </ModalFooter>
+          </form>
+        )}
+      </ModalContent>
+    </Modal>
   );
 }

@@ -1,511 +1,435 @@
-
-import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2 } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
-import { toast } from '@/components/ui/use-toast';
-import { familyService } from '@/services/api/family';
-import { transformFamilyDataForAPI, transformAPIFamilyToForm } from '@/utils/dataTransformers';
-import { Family } from '@/models/Family';
-
-interface Child {
-  name: string;
-  birth_date: string;
-  relationship: string;
-  gender: string;
-}
-
-interface FamilyFormData {
-  representative_name: string;
-  representative_birth_date: string;
-  representative_gender: string;
-  people_count: number;
-  children_count: number;
-  current_benefit: string;
-  benefit_status: string;
-  presence_status: string;
-  // Address
-  street: string;
-  number: string;
-  complement: string;
-  district: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  // Contact
-  contact_type: string;
-  contact_value: string;
-  contact_note: string;
-  // Children
-  children: Child[];
-}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Plus, Trash } from 'lucide-react';
+import { Family, FamilyFormData } from '@/models/Family';
+import { createFamily, updateFamily } from '@/services/families';
+import { toast } from '@/hooks/use-toast';
 
 interface FamilyFormModalProps {
+  family?: Family;
   isOpen: boolean;
   onClose: () => void;
-  family?: Family;
-  mode: 'create' | 'edit';
+  onSave: () => void;
 }
 
-export function FamilyFormModal({ isOpen, onClose, family, mode }: FamilyFormModalProps) {
-  const { addFamily, updateFamily } = useAppStore();
-  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<FamilyFormData>({
-    defaultValues: {
-      children: []
-    }
+export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormModalProps) {
+  const [formData, setFormData] = useState({
+    representative_name: family?.representative_name || '',
+    representative_birth_date: family?.representative_birth_date || '',
+    representative_gender: family?.representative_gender || 'Masculino',
+    people_count: family?.people_count || 1,
+    children_count: family?.children_count || 0,
+    current_benefit: family?.current_benefit || '',
+    benefit_status: family?.benefit_status || 'Ativo',
+    presence_status: family?.presence_status || 'Regular',
+    address: family?.address || {
+      street: '',
+      number: '',
+      complement: '',
+      district: '',
+      city: '',
+      state: '',
+      postal_code: '',
+    },
+    contacts: family?.contacts || [],
+    children: family?.children || [],
   });
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "children"
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [addressLoading, setAddressLoading] = useState(false);
 
-  const watchedCep = watch('postal_code');
-
-  useEffect(() => {
-    if (family && mode === 'edit') {
-      const formData = transformAPIFamilyToForm(family);
-      Object.keys(formData).forEach((key) => {
-        setValue(key as keyof FamilyFormData, formData[key]);
-      });
-    }
-  }, [family, mode, setValue]);
-
-  // Buscar CEP
-  useEffect(() => {
-    if (watchedCep && watchedCep.replace(/\D/g, '').length === 8) {
-      fetchAddressByCep(watchedCep.replace(/\D/g, ''));
-    }
-  }, [watchedCep]);
-
-  const fetchAddressByCep = async (cep: string) => {
-    setAddressLoading(true);
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      const data = await response.json();
-      
-      if (!data.erro) {
-        setValue('street', data.logradouro || '');
-        setValue('district', data.bairro || '');
-        setValue('city', data.localidade || '');
-        setValue('state', data.uf || '');
-      } else {
-        toast({
-          title: "CEP não encontrado",
-          description: "Verifique se o CEP está correto.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
-      toast({
-        title: "Erro ao buscar CEP",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive"
-      });
-    } finally {
-      setAddressLoading(false);
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const addChild = () => {
-    append({
-      name: '',
-      birth_date: '',
-      relationship: 'filho',
-      gender: 'masculino'
-    });
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      address: { ...prev.address, [name]: value }
+    }));
   };
 
-  const onSubmit = async (data: FamilyFormData) => {
-    setIsLoading(true);
+  const handleContactChange = (index: number, field: string, value: string) => {
+    const newContacts = [...formData.contacts];
+    newContacts[index] = { ...newContacts[index], [field]: value };
+    setFormData(prev => ({ ...prev, contacts: newContacts }));
+  };
+
+  const handleAddContact = () => {
+    setFormData(prev => ({
+      ...prev,
+      contacts: [...prev.contacts, { contact_type: '', contact_value: '', note: '' }]
+    }));
+  };
+
+  const handleRemoveContact = (index: number) => {
+    const newContacts = [...formData.contacts];
+    newContacts.splice(index, 1);
+    setFormData(prev => ({ ...prev, contacts: newContacts }));
+  };
+
+  const handleChildrenChange = (index: number, field: string, value: string) => {
+    const newChildren = [...formData.children];
+    newChildren[index] = { ...newChildren[index], [field]: value };
+    setFormData(prev => ({ ...prev, children: newChildren }));
+  };
+
+  const handleAddChildren = () => {
+    setFormData(prev => ({
+      ...prev,
+      children: [...prev.children, { name: '', birth_date: '', gender: 'Masculino' }]
+    }));
+  };
+
+  const handleRemoveChildren = (index: number) => {
+    const newChildren = [...formData.children];
+    newChildren.splice(index, 1);
+    setFormData(prev => ({ ...prev, children: newChildren }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     try {
-      const apiData = transformFamilyDataForAPI(data);
-      
-      if (mode === 'create') {
-        const response = await familyService.create(apiData);      
-        toast({
-          title: "Família cadastrada",
-          description: "A família foi cadastrada com sucesso.",
-        });
-      } else {
-        await familyService.update(family.id, apiData);
-        // updateFamily(family.id, {
-        //   name: data.representative_name,
-        //   address: `${data.street}, ${data.number} - ${data.district}, ${data.city}/${data.state}`,
-        //   phone: data.contact_value,
-        //   members: data.people_count,
-        //   notes: data.contact_note,
-        //   isActive: data.benefit_status === 'active',
-        // });
-        
-        toast({
-          title: "Família atualizada",
-          description: "Os dados da família foram atualizados com sucesso.",
-        });
-      }
+      const familyData: FamilyFormData = {
+        representative_name: formData.representative_name,
+        representative_birth_date: formData.representative_birth_date,
+        representative_gender: formData.representative_gender,
+        people_count: parseInt(formData.people_count.toString()),
+        children_count: parseInt(formData.children_count.toString()),
+        current_benefit: formData.current_benefit,
+        benefit_status: formData.benefit_status,
+        presence_status: formData.presence_status,
+        address: formData.address,
+        contacts: formData.contacts,
+        children: formData.children,
+      };
 
-      reset();
+      if (family) {
+        await updateFamily(family.id, familyData);
+      } else {
+        await createFamily(familyData);
+      }
+      
+      onSave();
       onClose();
     } catch (error) {
       console.error('Erro ao salvar família:', error);
-      toast({
-        title: "Erro",
-        description: mode === 'create' ? "Erro ao cadastrar família." : "Erro ao atualizar família.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === 'create' ? 'Cadastrar Nova Família' : 'Editar Família'}
-          </DialogTitle>
-        </DialogHeader>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
+      <AlertDialogContent className="max-w-3xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{family ? 'Editar Família' : 'Cadastrar Nova Família'}</AlertDialogTitle>
+          <AlertDialogDescription>
+            Preencha os campos abaixo para {family ? 'editar' : 'cadastrar'} uma família.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="representative_name">Nome do Representante</Label>
+                <Input
+                  id="representative_name"
+                  name="representative_name"
+                  value={formData.representative_name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Dados do Representante */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Dados do Representante</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="representative_birth_date">Data de Nascimento</Label>
+                <Input
+                  id="representative_birth_date"
+                  type="date"
+                  name="representative_birth_date"
+                  value={formData.representative_birth_date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="representative_gender">Gênero</Label>
+                <Select value={formData.representative_gender} onValueChange={(value: string) => setFormData(prev => ({ ...prev, representative_gender: value as 'Masculino' | 'Feminino' }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Masculino">Masculino</SelectItem>
+                    <SelectItem value="Feminino">Feminino</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="people_count">Número de Pessoas na Família</Label>
+                <Input
+                  id="people_count"
+                  type="number"
+                  name="people_count"
+                  value={formData.people_count}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="children_count">Número de Crianças</Label>
+                <Input
+                  id="children_count"
+                  type="number"
+                  name="children_count"
+                  value={formData.children_count}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="current_benefit">Benefício Atual</Label>
+                <Input
+                  id="current_benefit"
+                  name="current_benefit"
+                  value={formData.current_benefit}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="benefit_status">Status do Benefício</Label>
+                <Select value={formData.benefit_status} onValueChange={(value: string) => setFormData(prev => ({ ...prev, benefit_status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="presence_status">Status de Presença</Label>
+                <Select value={formData.presence_status} onValueChange={(value: string) => setFormData(prev => ({ ...prev, presence_status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Regular">Regular</SelectItem>
+                    <SelectItem value="Irregular">Irregular</SelectItem>
+                    <SelectItem value="Novo">Novo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="text-lg font-semibold">Endereço</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="representative_name">Nome do Representante *</Label>
-                  <Input
-                    id="representative_name"
-                    {...register('representative_name', { required: 'Nome é obrigatório' })}
-                  />
-                  {errors.representative_name && (
-                    <p className="text-sm text-destructive">{errors.representative_name.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="representative_birth_date">Data de Nascimento *</Label>
-                  <Input
-                    id="representative_birth_date"
-                    type="date"
-                    {...register('representative_birth_date', { required: 'Data de nascimento é obrigatória' })}
-                  />
-                  {errors.representative_birth_date && (
-                    <p className="text-sm text-destructive">{errors.representative_birth_date.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="representative_gender">Gênero *</Label>
-                  <Select onValueChange={(value) => setValue('representative_gender', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o gênero" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="masculino">Masculino</SelectItem>
-                      <SelectItem value="feminino">Feminino</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Dados da Família */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Dados da Família</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="people_count">Número de Pessoas *</Label>
-                  <Input
-                    id="people_count"
-                    type="number"
-                    min="1"
-                    {...register('people_count', { required: 'Número de pessoas é obrigatório', min: 1 })}
-                  />
-                  {errors.people_count && (
-                    <p className="text-sm text-destructive">{errors.people_count.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="children_count">Número de Crianças</Label>
-                  <Input
-                    id="children_count"
-                    type="number"
-                    min="0"
-                    {...register('children_count')}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="current_benefit">Benefício Atual</Label>
-                  <Input
-                    id="current_benefit"
-                    {...register('current_benefit')}
-                    placeholder="Ex: Bolsa Família, Auxílio Brasil"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="benefit_status">Status do Benefício</Label>
-                  <Select onValueChange={(value) => setValue('benefit_status', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Ativo</SelectItem>
-                      <SelectItem value="inactive">Inativo</SelectItem>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="presence_status">Status de Presença</Label>
-                  <Select onValueChange={(value) => setValue('presence_status', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="present">Presente</SelectItem>
-                      <SelectItem value="absent">Ausente</SelectItem>
-                      <SelectItem value="inactive">Inativo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Endereço */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Endereço</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="postal_code">CEP</Label>
-                  <Input
-                    id="postal_code"
-                    {...register('postal_code')}
-                    placeholder="12345-678"
-                    disabled={addressLoading}
-                  />
-                  {addressLoading && <p className="text-sm text-muted-foreground">Buscando...</p>}
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="street">Rua/Avenida</Label>
+                  <Label htmlFor="street">Rua</Label>
                   <Input
                     id="street"
-                    {...register('street')}
-                    placeholder="Nome da rua ou avenida"
+                    name="street"
+                    value={formData.address.street}
+                    onChange={handleAddressChange}
+                    required
                   />
                 </div>
-
                 <div>
                   <Label htmlFor="number">Número</Label>
                   <Input
                     id="number"
-                    {...register('number')}
-                    placeholder="123"
+                    name="number"
+                    value={formData.address.number}
+                    onChange={handleAddressChange}
+                    required
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="complement">Complemento</Label>
                   <Input
                     id="complement"
-                    {...register('complement')}
-                    placeholder="Apto, casa, etc."
+                    name="complement"
+                    value={formData.address.complement}
+                    onChange={handleAddressChange}
                   />
                 </div>
-
                 <div>
                   <Label htmlFor="district">Bairro</Label>
                   <Input
                     id="district"
-                    {...register('district')}
-                    placeholder="Nome do bairro"
+                    name="district"
+                    value={formData.address.district}
+                    onChange={handleAddressChange}
+                    required
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="city">Cidade</Label>
                   <Input
                     id="city"
-                    {...register('city')}
-                    placeholder="Nome da cidade"
+                    name="city"
+                    value={formData.address.city}
+                    onChange={handleAddressChange}
+                    required
                   />
                 </div>
-
                 <div>
                   <Label htmlFor="state">Estado</Label>
                   <Input
                     id="state"
-                    {...register('state')}
-                    placeholder="SP"
-                    maxLength={2}
+                    name="state"
+                    value={formData.address.state}
+                    onChange={handleAddressChange}
+                    required
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Contato */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contato</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="contact_type">Tipo de Contato</Label>
-                  <Select onValueChange={(value) => setValue('contact_type', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="phone">Telefone</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="contact_value">Contato</Label>
-                  <Input
-                    id="contact_value"
-                    {...register('contact_value')}
-                    placeholder="(11) 99999-9999"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="contact_note">Observações</Label>
-                  <Textarea
-                    id="contact_note"
-                    {...register('contact_note')}
-                    placeholder="Observações sobre a família..."
-                  />
-                </div>
+              <div>
+                <Label htmlFor="postal_code">CEP</Label>
+                <Input
+                  id="postal_code"
+                  name="postal_code"
+                  value={formData.address.postal_code}
+                  onChange={handleAddressChange}
+                  required
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Crianças */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Crianças (Opcional)</CardTitle>
-                <Button type="button" variant="outline" size="sm" onClick={addChild}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Criança
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {fields.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  Nenhuma criança adicionada
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="border rounded-lg p-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Criança {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`children.${index}.name`}>Nome</Label>
-                          <Input
-                            {...register(`children.${index}.name` as const, { required: 'Nome é obrigatório' })}
-                            placeholder="Nome da criança"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`children.${index}.birth_date`}>Data de Nascimento</Label>
-                          <Input
-                            type="date"
-                            {...register(`children.${index}.birth_date` as const, { required: 'Data é obrigatória' })}
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`children.${index}.gender`}>Gênero</Label>
-                          <Select onValueChange={(value) => setValue(`children.${index}.gender`, value)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="masculino">Masculino</SelectItem>
-                              <SelectItem value="feminino">Feminino</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`children.${index}.relationship`}>Parentesco</Label>
-                          <Select onValueChange={(value) => setValue(`children.${index}.relationship`, value)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="filho">Filho(a)</SelectItem>
-                              <SelectItem value="neto">Neto(a)</SelectItem>
-                              <SelectItem value="sobrinho">Sobrinho(a)</SelectItem>
-                              <SelectItem value="outro">Outro</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            <div className="space-y-2">
+              <h4 className="text-lg font-semibold">Contatos</h4>
+              {formData.contacts.map((contact, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div>
+                    <Label htmlFor={`contact_type_${index}`}>Tipo de Contato</Label>
+                    <Input
+                      id={`contact_type_${index}`}
+                      type="text"
+                      value={contact.contact_type}
+                      onChange={(e) => handleContactChange(index, 'contact_type', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`contact_value_${index}`}>Contato</Label>
+                    <Input
+                      id={`contact_value_${index}`}
+                      type="text"
+                      value={contact.contact_value}
+                      onChange={(e) => handleContactChange(index, 'contact_value', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveContact(index)}>
+                      <Trash className="h-4 w-4 mr-2" />
+                      Remover
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+              <Button type="button" variant="secondary" size="sm" onClick={handleAddContact}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Contato
+              </Button>
+            </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90" disabled={isLoading}>
-              {isLoading ? 'Salvando...' : (mode === 'create' ? 'Cadastrar' : 'Atualizar')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="space-y-2">
+              <h4 className="text-lg font-semibold">Filhos</h4>
+              {formData.children.map((child, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div>
+                    <Label htmlFor={`child_name_${index}`}>Nome</Label>
+                    <Input
+                      id={`child_name_${index}`}
+                      type="text"
+                      value={child.name}
+                      onChange={(e) => handleChildrenChange(index, 'name', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`child_birth_date_${index}`}>Data de Nascimento</Label>
+                    <Input
+                      id={`child_birth_date_${index}`}
+                      type="date"
+                      value={child.birth_date}
+                      onChange={(e) => handleChildrenChange(index, 'birth_date', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`child_gender_${index}`}>Gênero</Label>
+                    <Select value={child.gender} onValueChange={(value: string) => {
+                      const newChildren = [...formData.children];
+                      newChildren[index] = { ...newChildren[index], gender: value as 'Masculino' | 'Feminino' };
+                      setFormData(prev => ({ ...prev, children: newChildren }));
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Masculino">Masculino</SelectItem>
+                        <SelectItem value="Feminino">Feminino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveChildren(index)}>
+                      <Trash className="h-4 w-4 mr-2" />
+                      Remover
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="secondary" size="sm" onClick={handleAddChildren}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Filho
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <Button type="submit" onClick={handleSubmit}>Salvar</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

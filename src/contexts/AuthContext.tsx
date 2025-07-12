@@ -31,10 +31,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Verificar se há um token na URL (vindo do Google OAuth)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    
+    if (tokenFromUrl) {
+      localStorage.setItem('auth_token', tokenFromUrl);
+      // Limpar a URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Verificar se há um token salvo no localStorage
     const token = localStorage.getItem('auth_token');
     if (token) {
-      // Verificar se o token é válido
       verifyToken(token);
     } else {
       setIsLoading(false);
