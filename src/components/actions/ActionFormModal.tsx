@@ -12,7 +12,7 @@ import {
   SelectItem,
 } from "@nextui-org/react";
 import { Action, ActionFormData } from '@/models/Action';
-import { createAction, updateAction } from '@/services/actionService';
+import { actionService } from '@/services/api/actions';
 
 interface ActionFormModalProps {
   action?: Action;
@@ -83,9 +83,9 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
     
     try {
       if (action) {
-        await updateAction(action.id, formData);
+        await actionService.update(action.id, formData);
       } else {
-        await createAction(formData);
+        await actionService.create(formData);
       }
       
       onSave();

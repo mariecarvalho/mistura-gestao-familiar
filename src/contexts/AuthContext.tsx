@@ -1,5 +1,5 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { authService } from '@/services/auth'; 
 
 interface User {
   id: string;
@@ -52,23 +52,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyToken = async (token: string) => {
     try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.user);
-      } else {
-        localStorage.removeItem('auth_token');
-      }
+      const userData = await authService.verify(token);
+      setUser(userData.user);
     } catch (error) {
       console.error('Erro ao verificar token:', error);
       localStorage.removeItem('auth_token');
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -76,22 +65,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('auth_token', data.token);
-        setUser(data.user);
-        return true;
-      } else {
-        return false;
-      }
+      const data = await authService.login({ email, password });
+      localStorage.setItem('auth_token', data.token);
+      setUser(data.user);
+      return true;
     } catch (error) {
       console.error('Erro no login:', error);
       return false;
@@ -99,17 +76,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    authService.logout();
     setUser(null);
   };
 
-  const value = {
-    user,
-    login,
-    logout,
-    isLoading,
-    isAuthenticated: !!user,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isLoading,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

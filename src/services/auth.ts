@@ -1,22 +1,21 @@
-
 import { config } from '@/config/environment';
 
-const API_BASE_URL = config.API_BASE_URL;
+const API_BASE_URL = config.API_BASE_URL; // Exemplo: http://localhost:5000/api
 
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export interface RegisterData {
-  name: string;
+export interface User {
+  id: string;
   email: string;
-  password: string;
-  role?: 'admin' | 'volunteer';
+  name: string;
+  role: 'admin' | 'volunteer';
 }
 
 export const authService = {
-  login: async (credentials: LoginCredentials) => {
+  login: async (credentials: LoginCredentials): Promise<{ token: string; user: User }> => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -29,26 +28,10 @@ export const authService = {
       throw new Error('Credenciais inválidas');
     }
 
-    return response.json();
+    return response.json(); // { token, user }
   },
 
-  register: async (userData: RegisterData) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao criar usuário');
-    }
-
-    return response.json();
-  },
-
-  verify: async (token: string) => {
+  verify: async (token: string): Promise<{ user: User }> => {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: 'POST',
       headers: {
@@ -61,10 +44,25 @@ export const authService = {
       throw new Error('Token inválido');
     }
 
-    return response.json();
+    return response.json(); // { user }
   },
 
-  logout: async () => {
+  getProfile: async (token: string): Promise<{ user: User }> => {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Não autorizado');
+    }
+
+    return response.json(); // { user }
+  },
+
+  logout: () => {
     localStorage.removeItem('auth_token');
   },
 };

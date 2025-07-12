@@ -1,10 +1,10 @@
 import { config } from '@/config/environment';
-import { Family } from '@/models/Family';
+import { Family, FamilyFormData } from '@/models/Family';
 
 const API_BASE_URL = config.API_BASE_URL;
 
 export const familyService = {
-  create: async (familyData: Family) => {
+  create: async (familyData: FamilyFormData) => {
     const response = await fetch(`${API_BASE_URL}/families`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -15,7 +15,7 @@ export const familyService = {
     return response.json();
   },
 
-  update: async (id: string, familyData: Family) => {
+  update: async (id: string, familyData: FamilyFormData) => {
     const response = await fetch(`${API_BASE_URL}/families/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

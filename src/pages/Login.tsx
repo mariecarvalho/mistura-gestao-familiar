@@ -55,10 +55,10 @@ export function Login({ onShowRegister, onShowForgotPassword }: LoginProps) {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     try {
-      // Redireciona para o endpoint do Google OAuth no backend
-      window.location.href = '/api/auth/google';
+      console.log('entrou sss')
+      window.location.href = 'http://localhost:3000/oauth/google';
     } catch (error) {
       toast({
         title: "Erro",

@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -18,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Plus, Trash } from 'lucide-react';
 import { Family, FamilyFormData } from '@/models/Family';
-import { createFamily, updateFamily } from '@/services/families';
+import { familyService } from '@/services/api/family';
 import { toast } from '@/hooks/use-toast';
 
 interface FamilyFormModalProps {
@@ -121,9 +120,9 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
       };
 
       if (family) {
-        await updateFamily(family.id, familyData);
+        await familyService.update(family.id, familyData);
       } else {
-        await createFamily(familyData);
+        await familyService.create(familyData);
       }
       
       onSave();
