@@ -34,7 +34,7 @@ export function Families() {
 
   const filteredFamilies = families.filter(family =>
     family.representative_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (family.address?.street || family.street || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (family.address?.street || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateFamily = () => {
@@ -137,18 +137,22 @@ export function Families() {
                   <CardContent className="pt-0">
                     <div className="space-y-2 mb-4">
                       <p className="text-sm text-muted-foreground">
-                        <strong>Endereço:</strong> {family.address?.street || family.street || 'Não informado'}
+                        <strong>Endereço:</strong> {family.address?.street || 'Não informado'}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         <strong>Telefone:</strong> {
                           family.contacts?.[0]?.contact_value || 
-                          family.contact_value || 
                           'Não informado'
                         }
                       </p>
-                      {(family.contacts?.[0]?.contact_note || family.contact_note) && (
+                      {Array.isArray(family.current_benefit) && family.current_benefit.length > 0 && (
                         <p className="text-sm text-muted-foreground">
-                          <strong>Observações:</strong> {family.contacts?.[0]?.contact_note || family.contact_note}
+                          <strong>Benefícios:</strong> {family.current_benefit.join(', ')}
+                        </p>
+                      )}
+                      {(family.contacts?.[0]?.contact_note) && (
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Observações:</strong> {family.contacts?.[0]?.contact_note}
                         </p>
                       )}
                     </div>

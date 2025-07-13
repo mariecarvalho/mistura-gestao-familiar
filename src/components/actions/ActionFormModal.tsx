@@ -30,7 +30,7 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
     description: action?.description || '',
     date: action?.date || '',
     type: action?.type || '',
-    status: action?.status || 'Planejada',
+    status: action?.status || 'planned',
     volunteer_count: action?.volunteer_count || 0,
     families_served: action?.families_served || 0,
     dishOfTheDay: action?.dishOfTheDay || '',
@@ -47,8 +47,8 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
         status: action.status,
         volunteer_count: action.volunteer_count,
         families_served: action.families_served,
-        dishOfTheDay: action.dishOfTheDay,
-        actionCost: action.actionCost,
+        dishOfTheDay: action.dishOfTheDay || '',
+        actionCost: action.actionCost || 0,
       });
     } else {
       setFormData({
@@ -56,7 +56,7 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
         description: '',
         date: '',
         type: '',
-        status: 'Planejada',
+        status: 'planned',
         volunteer_count: 0,
         families_served: 0,
         dishOfTheDay: '',
@@ -152,10 +152,9 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Distribuição de Alimentos">Distribuição de Alimentos</SelectItem>
-                  <SelectItem value="Apoio Médico">Apoio Médico</SelectItem>
-                  <SelectItem value="Apoio Jurídico">Apoio Jurídico</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
+                  <SelectItem value="Distribuição de Marmitas">Distribuição de Marmitas</SelectItem>
+                  <SelectItem value="Eventos de Arrecadação">Eventos de Arrecadação</SelectItem>
+                  <SelectItem value="Eventos Parceiros">Eventos Parceiros</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -168,10 +167,10 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Planejada">Planejada</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                <SelectItem value="Concluída">Concluída</SelectItem>
-                <SelectItem value="Cancelada">Cancelada</SelectItem>
+                <SelectItem value="planned">Planejada</SelectItem>
+                <SelectItem value="in-progress">Em Andamento</SelectItem>
+                <SelectItem value="completed">Concluída</SelectItem>
+                <SelectItem value="cancelled">Cancelada</SelectItem>
               </SelectContent>
             </Select>
           </div>

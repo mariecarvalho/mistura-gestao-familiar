@@ -8,8 +8,8 @@ export interface Action {
   status: string;
   volunteer_count: number;
   families_served: number;
-  dishOfTheDay: string;
-  actionCost: number;
+  dishOfTheDay?: string;
+  actionCost?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -22,6 +22,6 @@ export interface ActionFormData {
   status: string;
   volunteer_count: number;
   families_served: number;
-  dishOfTheDay: string;
-  actionCost: number;
+  dishOfTheDay?: string;
+  actionCost?: number;
 }

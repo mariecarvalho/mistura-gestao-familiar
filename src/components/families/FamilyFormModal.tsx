@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,9 +31,16 @@ interface FamilyFormModalProps {
   onSave?: () => void;
 }
 
+const benefitOptions = [
+  'Marmitas Mistura',
+  'Sopa',
+  'Cesta Básica',
+  'Doação de Roupa',
+  'Doação de Alimentos'
+];
+
 export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormModalProps) {
   const { fetchCep, loading: cepLoading, error: cepError } = useCep();
-  console.log('family', family)
 
   const [formData, setFormData] = useState<FamilyFormData>({
     representative_name: family?.representative_name || '',
@@ -40,7 +48,7 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
     representative_gender: family?.representative_gender || 'Masculino',
     people_count: family?.people_count || 1,
     children_count: family?.children_count || 0,
-    current_benefit: family?.current_benefit || '',
+    current_benefit: Array.isArray(family?.current_benefit) ? family.current_benefit : [],
     benefit_status: family?.benefit_status || 'Ativo',
     presence_status: family?.presence_status || 'Regular',
     address: family?.address || {
@@ -55,7 +63,7 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
     contacts: family?.contacts || [],
     children: family?.children || [],
   });
-  // console.log('formData', formData)
+
   useEffect(() => {
     if (family) {
       setFormData({
@@ -64,7 +72,7 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
         representative_gender: family.representative_gender,
         people_count: family.people_count,
         children_count: family.children_count,
-        current_benefit: family.current_benefit,
+        current_benefit: Array.isArray(family.current_benefit) ? family.current_benefit : [],
         benefit_status: family.benefit_status,
         presence_status: family.presence_status,
         address: family.address,
@@ -111,6 +119,15 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
         }));
       }
     }
+  };
+
+  const handleBenefitChange = (benefit: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      current_benefit: checked
+        ? [...prev.current_benefit, benefit]
+        : prev.current_benefit.filter(b => b !== benefit)
+    }));
   };
 
   const handleContactChange = (index: number, field: string, value: string) => {
@@ -190,7 +207,9 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
         await familyService.create(familyData);
       }
       
-      onSave();
+      if (onSave) {
+        onSave();
+      }
       onClose();
     } catch (error) {
       console.error('Erro ao salvar família:', error);
@@ -208,6 +227,7 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
         </AlertDialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Dados do Representante */}
           <Card>
             <CardContent className="p-4">
               <h3 className="text-lg font-semibold mb-4">Dados do Representante</h3>
@@ -359,6 +379,49 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
                     onChange={handleAddressChange}
                     required
                   />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Benefícios */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-lg font-semibold mb-4">Benefícios</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Benefícios Atuais (múltipla escolha)</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {benefitOptions.map((benefit) => (
+                      <div key={benefit} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={benefit}
+                          checked={formData.current_benefit.includes(benefit)}
+                          onCheckedChange={(checked) => handleBenefitChange(benefit, checked as boolean)}
+                        />
+                        <Label htmlFor={benefit} className="text-sm font-normal">
+                          {benefit}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="benefit_status">Status do Benefício</Label>
+                  <Select 
+                    value={formData.benefit_status} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, benefit_status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                      <SelectItem value="Pendente">Pendente</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -553,41 +616,6 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
                     Nenhuma criança adicionada
                   </p>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Outros Dados */}
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Outros Dados</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="current_benefit">Benefício Atual</Label>
-                  <Input
-                    id="current_benefit"
-                    name="current_benefit"
-                    value={formData.current_benefit}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="benefit_status">Status do Benefício</Label>
-                  <Select 
-                    value={formData.benefit_status} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, benefit_status: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Inativo">Inativo</SelectItem>
-                      <SelectItem value="Pendente">Pendente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </CardContent>
           </Card>

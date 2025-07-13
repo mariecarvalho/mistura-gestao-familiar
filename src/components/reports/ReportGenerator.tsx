@@ -36,7 +36,7 @@ export function ReportGenerator({ families, actions }: ReportGeneratorProps) {
       family.representative_gender,
       family.people_count,
       family.children_count,
-      family.current_benefit || 'Não informado',
+      Array.isArray(family.current_benefit) ? family.current_benefit.join('; ') : (family.current_benefit || 'Não informado'),
       family.benefit_status || 'Não informado',
       family.address?.street || 'Não informado',
       family.address?.city || 'Não informado',

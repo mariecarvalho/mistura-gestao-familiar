@@ -1,4 +1,6 @@
 
+import { Child } from './Child';
+
 export interface Address {
   street: string;
   number: string;
@@ -15,16 +17,6 @@ export interface Contact {
   contact_note?: string;
 }
 
-export interface Child {
-  id?: string;
-  name: string;
-  birth_date: string;
-  relationship: string;
-  gender: 'Masculino' | 'Feminino';
-  status: 'Ativo' | 'Inativo';
-  age?: number;
-}
-
 export interface Family {
   id: string;
   representative_name: string;
@@ -32,7 +24,7 @@ export interface Family {
   representative_gender: 'Masculino' | 'Feminino';
   people_count: number;
   children_count: number;
-  current_benefit: string;
+  current_benefit: string[];
   benefit_status: string;
   last_presence_date: string;
   presence_status: string;
@@ -53,7 +45,7 @@ export interface FamilyFormData {
   representative_gender: 'Masculino' | 'Feminino';
   people_count: number;
   children_count: number;
-  current_benefit: string;
+  current_benefit: string[];
   benefit_status: string;
   presence_status: string;
   address: Address;
@@ -68,7 +60,7 @@ export type FamilyOutput = {
   representative_gender: 'Masculino' | 'Feminino';
   people_count: number;
   children_count: number;
-  current_benefit: string;
+  current_benefit: string[];
   benefit_status: string;
   last_presence_date: string;
   presence_status: string;
@@ -100,4 +92,3 @@ export type FamilyOutput = {
   contact_value?: string;
   contact_note?: string;
 };
-
