@@ -10,43 +10,39 @@ import { familyService } from '@/services/api/family'
 import { Family } from '@/models/Family';
 
 export function Families() {
-const [families, setFamilies] = useState<Family[]>([]);
-const [isLoading, setIsLoading] = useState(true);
-
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedFamily, setSelectedFamily] = useState<Family>(null);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
 
   useEffect(() => {
-  const fetchFamilies = async () => {
-    try {
-      const response = await familyService.getAll();
-      setFamilies(response);
-    } catch (error) {
-      console.error('Erro ao buscar famílias:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const fetchFamilies = async () => {
+      try {
+        const response = await familyService.getAll();
+        setFamilies(response);
+      } catch (error) {
+        console.error('Erro ao buscar famílias:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  fetchFamilies();
-}, []);
+    fetchFamilies();
+  }, []);
 
   const filteredFamilies = families.filter(family =>
     family.representative_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    family.street.toLowerCase().includes(searchTerm.toLowerCase())
+    (family.address?.street || family.street || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateFamily = () => {
-    setModalMode('create');
     setSelectedFamily(null);
     setIsFormModalOpen(true);
   };
 
   const handleEditFamily = (family: Family) => {
-    setModalMode('edit');
     setSelectedFamily(family);
     setIsFormModalOpen(true);
   };
@@ -56,7 +52,19 @@ const [isLoading, setIsLoading] = useState(true);
     setIsDeleteModalOpen(true);
   };
 
-  
+  const handleSaveFamily = () => {
+    // Recarregar a lista de famílias
+    const fetchFamilies = async () => {
+      try {
+        const response = await familyService.getAll();
+        setFamilies(response);
+      } catch (error) {
+        console.error('Erro ao recarregar famílias:', error);
+      }
+    };
+    fetchFamilies();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -122,21 +130,25 @@ const [isLoading, setIsLoading] = useState(true);
                           ? 'bg-soft-green text-green-800' 
                           : 'bg-muted text-muted-foreground'
                       }`}>
-                        {family.benefit_status ? 'Ativa' : 'Inativa'}
+                        {family.benefit_status || 'Ativo'}
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-2 mb-4">
                       <p className="text-sm text-muted-foreground">
-                        <strong>Endereço:</strong> {family.street}
+                        <strong>Endereço:</strong> {family.address?.street || family.street || 'Não informado'}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        <strong>Telefone:</strong> {family.contact_value}
+                        <strong>Telefone:</strong> {
+                          family.contacts?.[0]?.contact_value || 
+                          family.contact_value || 
+                          'Não informado'
+                        }
                       </p>
-                      {family.contact_note && (
+                      {(family.contacts?.[0]?.contact_note || family.contact_note) && (
                         <p className="text-sm text-muted-foreground">
-                          <strong>Observações:</strong> {family.contact_note}
+                          <strong>Observações:</strong> {family.contacts?.[0]?.contact_note || family.contact_note}
                         </p>
                       )}
                     </div>
@@ -170,14 +182,14 @@ const [isLoading, setIsLoading] = useState(true);
       <FamilyFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
-        family={selectedFamily}
-        mode={modalMode}
+        family={selectedFamily || undefined}
+        onSave={handleSaveFamily}
       />
 
       <FamilyDeleteModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        family={selectedFamily}
+        family={selectedFamily || undefined}
       />
     </div>
   );

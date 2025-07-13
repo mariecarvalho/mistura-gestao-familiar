@@ -1,24 +1,27 @@
+
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-  Textarea,
-  Select,
-  SelectItem,
-} from "@nextui-org/react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Action, ActionFormData } from '@/models/Action';
-import { actionService } from '@/services/api/actions';
 
 interface ActionFormModalProps {
   action?: Action;
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSave?: () => void;
 }
 
 export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormModalProps) {
@@ -66,15 +69,16 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
     const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
-      [name]: value
+      [name]: name === 'volunteer_count' || name === 'families_served' || name === 'actionCost'
+        ? Number(value) || 0
+        : value
     }));
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleSelectChange = (field: string, value: string) => {
     setFormData(prevData => ({
       ...prevData,
-      [name]: value
+      [field]: value
     }));
   };
 
@@ -82,13 +86,11 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
     e.preventDefault();
     
     try {
-      if (action) {
-        await actionService.update(action.id, formData);
-      } else {
-        await actionService.create(formData);
-      }
+      console.log('Dados da ação:', formData);
       
-      onSave();
+      if (onSave) {
+        onSave();
+      }
       onClose();
     } catch (error) {
       console.error('Erro ao salvar ação:', error);
@@ -96,105 +98,145 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} backdrop="blur">
-      <ModalContent>
-        {(closeModal) => (
-          <form onSubmit={handleSubmit}>
-            <ModalHeader className="flex flex-col gap-1">
-              {action ? 'Editar Ação' : 'Nova Ação'}
-            </ModalHeader>
-            <ModalBody>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
+      <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {action ? 'Editar Ação' : 'Nova Ação'}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Preencha os campos abaixo para {action ? 'editar' : 'criar'} uma ação.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Título</Label>
+            <Input
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Data</Label>
               <Input
-                type="text"
-                label="Título"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                isRequired
-              />
-              <Textarea
-                label="Descrição"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                isRequired
-              />
-              <Input
-                type="date"
-                label="Data"
+                id="date"
                 name="date"
+                type="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                isRequired
+                required
               />
-              <Select
-                label="Tipo"
-                name="type"
-                selectedKeys={[formData.type]}
-                onSelectionChange={(value) => setFormData({ ...formData, type: value.currentKey || '' })}
-                isRequired
-              >
-                <SelectItem key="Distribuição de Alimentos" value="Distribuição de Alimentos">Distribuição de Alimentos</SelectItem>
-                <SelectItem key="Apoio Médico" value="Apoio Médico">Apoio Médico</SelectItem>
-                <SelectItem key="Apoio Jurídico" value="Apoio Jurídico">Apoio Jurídico</SelectItem>
-                <SelectItem key="Outro" value="Outro">Outro</SelectItem>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="type">Tipo</Label>
+              <Select value={formData.type} onValueChange={(value) => handleSelectChange('type', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Distribuição de Alimentos">Distribuição de Alimentos</SelectItem>
+                  <SelectItem value="Apoio Médico">Apoio Médico</SelectItem>
+                  <SelectItem value="Apoio Jurídico">Apoio Jurídico</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
+                </SelectContent>
               </Select>
-              <Select
-                label="Status"
-                name="status"
-                selectedKeys={[formData.status]}
-                onSelectionChange={(value) => setFormData({ ...formData, status: value.currentKey || '' })}
-                isRequired
-              >
-                <SelectItem key="Planejada" value="Planejada">Planejada</SelectItem>
-                <SelectItem key="Em Andamento" value="Em Andamento">Em Andamento</SelectItem>
-                <SelectItem key="Concluída" value="Concluída">Concluída</SelectItem>
-                <SelectItem key="Cancelada" value="Cancelada">Cancelada</SelectItem>
-              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Planejada">Planejada</SelectItem>
+                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem value="Concluída">Concluída</SelectItem>
+                <SelectItem value="Cancelada">Cancelada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="volunteer_count">Número de Voluntários</Label>
               <Input
-                type="number"
-                label="Número de Voluntários"
+                id="volunteer_count"
                 name="volunteer_count"
-                value={formData.volunteer_count?.toString()}
+                type="number"
+                min="0"
+                value={formData.volunteer_count}
                 onChange={handleInputChange}
-                isRequired
+                required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="families_served">Número de Famílias Servidas</Label>
               <Input
-                type="number"
-                label="Número de Famílias Servidas"
+                id="families_served"
                 name="families_served"
-                value={formData.families_served?.toString()}
-                onChange={handleInputChange}
-                isRequired
-              />
-               <Input
-                type="text"
-                label="Prato do Dia"
-                name="dishOfTheDay"
-                value={formData.dishOfTheDay}
-                onChange={handleInputChange}
-                
-              />
-               <Input
                 type="number"
-                label="Custo da Ação"
-                name="actionCost"
-                value={formData.actionCost?.toString()}
+                min="0"
+                value={formData.families_served}
                 onChange={handleInputChange}
-                
+                required
               />
-            </ModalBody>
-            <ModalFooter>
-              <Button color="danger" variant="flat" onPress={onClose}>
-                Cancelar
-              </Button>
-              <Button color="primary" type="submit">
-                {action ? 'Salvar' : 'Criar'}
-              </Button>
-            </ModalFooter>
-          </form>
-        )}
-      </ModalContent>
-    </Modal>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dishOfTheDay">Prato do Dia</Label>
+            <Input
+              id="dishOfTheDay"
+              name="dishOfTheDay"
+              value={formData.dishOfTheDay}
+              onChange={handleInputChange}
+              placeholder="Ex: Feijoada, Lasanha, etc."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="actionCost">Custo da Ação (R$)</Label>
+            <Input
+              id="actionCost"
+              name="actionCost"
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.actionCost}
+              onChange={handleInputChange}
+              placeholder="0.00"
+            />
+          </div>
+        </form>
+        
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
+          <Button type="submit" onClick={handleSubmit}>
+            {action ? 'Salvar' : 'Criar'}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

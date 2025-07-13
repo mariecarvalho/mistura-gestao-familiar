@@ -1,34 +1,40 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Trash } from 'lucide-react';
-import { Family, FamilyFormData } from '@/models/Family';
+import { Plus, Trash, AlertTriangle, Loader2 } from 'lucide-react';
+import { FamilyFormData, FamilyOutput } from '@/models/Family';
+import { Child } from '@/models/Child';
+import { useCep } from '@/hooks/use-cep';
 import { familyService } from '@/services/api/family';
-import { toast } from '@/hooks/use-toast';
+import { calculateAge, getChildStatus, isChildAdult } from '@/utils/childUtils';
 
 interface FamilyFormModalProps {
-  family?: Family;
+  family?: FamilyOutput;
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSave?: () => void;
 }
 
 export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormModalProps) {
-  const [formData, setFormData] = useState({
+  const { fetchCep, loading: cepLoading, error: cepError } = useCep();
+  console.log('family', family)
+
+  const [formData, setFormData] = useState<FamilyFormData>({
     representative_name: family?.representative_name || '',
     representative_birth_date: family?.representative_birth_date || '',
     representative_gender: family?.representative_gender || 'Masculino',
@@ -49,8 +55,26 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
     contacts: family?.contacts || [],
     children: family?.children || [],
   });
+  // console.log('formData', formData)
+  useEffect(() => {
+    if (family) {
+      setFormData({
+        representative_name: family.representative_name,
+        representative_birth_date: family.representative_birth_date,
+        representative_gender: family.representative_gender,
+        people_count: family.people_count,
+        children_count: family.children_count,
+        current_benefit: family.current_benefit,
+        benefit_status: family.benefit_status,
+        presence_status: family.presence_status,
+        address: family.address,
+        contacts: family.contacts,
+        children: family.children,
+      });
+    }
+  }, [family]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -63,6 +87,32 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
     }));
   };
 
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, '');
+    
+    setFormData(prev => ({
+      ...prev,
+      address: { ...prev.address, postal_code: cep }
+    }));
+
+    if (cep.length === 8) {
+      const cepData = await fetchCep(cep);
+      if (cepData) {
+        setFormData(prev => ({
+          ...prev,
+          address: {
+            ...prev.address,
+            street: cepData.logradouro,
+            district: cepData.bairro,
+            city: cepData.localidade,
+            state: cepData.uf,
+            complement: cepData.complemento || prev.address.complement,
+          }
+        }));
+      }
+    }
+  };
+
   const handleContactChange = (index: number, field: string, value: string) => {
     const newContacts = [...formData.contacts];
     newContacts[index] = { ...newContacts[index], [field]: value };
@@ -72,7 +122,7 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
   const handleAddContact = () => {
     setFormData(prev => ({
       ...prev,
-      contacts: [...prev.contacts, { contact_type: '', contact_value: '', note: '' }]
+      contacts: [...prev.contacts, { contact_type: '', contact_value: '', contact_note: '' }]
     }));
   };
 
@@ -84,14 +134,29 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
 
   const handleChildrenChange = (index: number, field: string, value: string) => {
     const newChildren = [...formData.children];
-    newChildren[index] = { ...newChildren[index], [field]: value };
+    const updatedChild = { ...newChildren[index], [field]: value };
+    
+    if (field === 'birth_date') {
+      updatedChild.status = getChildStatus(value);
+      updatedChild.age = calculateAge(value);
+    }
+    
+    newChildren[index] = updatedChild;
     setFormData(prev => ({ ...prev, children: newChildren }));
   };
 
   const handleAddChildren = () => {
+    const newChild: Child = {
+      name: '',
+      birth_date: '',
+      relationship: 'Filho(a)',
+      gender: 'Masculino',
+      status: 'Ativo'
+    };
+    
     setFormData(prev => ({
       ...prev,
-      children: [...prev.children, { name: '', birth_date: '', gender: 'Masculino' }]
+      children: [...prev.children, newChild]
     }));
   };
 
@@ -134,180 +199,158 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-3xl">
+      <AlertDialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>{family ? 'Editar Família' : 'Cadastrar Nova Família'}</AlertDialogTitle>
           <AlertDialogDescription>
             Preencha os campos abaixo para {family ? 'editar' : 'cadastrar'} uma família.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="representative_name">Nome do Representante</Label>
-                <Input
-                  id="representative_name"
-                  name="representative_name"
-                  value={formData.representative_name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="representative_birth_date">Data de Nascimento</Label>
-                <Input
-                  id="representative_birth_date"
-                  type="date"
-                  name="representative_birth_date"
-                  value={formData.representative_birth_date}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="representative_gender">Gênero</Label>
-                <Select value={formData.representative_gender} onValueChange={(value: string) => setFormData(prev => ({ ...prev, representative_gender: value as 'Masculino' | 'Feminino' }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Masculino">Masculino</SelectItem>
-                    <SelectItem value="Feminino">Feminino</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="people_count">Número de Pessoas na Família</Label>
-                <Input
-                  id="people_count"
-                  type="number"
-                  name="people_count"
-                  value={formData.people_count}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="children_count">Número de Crianças</Label>
-                <Input
-                  id="children_count"
-                  type="number"
-                  name="children_count"
-                  value={formData.children_count}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="current_benefit">Benefício Atual</Label>
-                <Input
-                  id="current_benefit"
-                  name="current_benefit"
-                  value={formData.current_benefit}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="benefit_status">Status do Benefício</Label>
-                <Select value={formData.benefit_status} onValueChange={(value: string) => setFormData(prev => ({ ...prev, benefit_status: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                    <SelectItem value="Pendente">Pendente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="presence_status">Status de Presença</Label>
-                <Select value={formData.presence_status} onValueChange={(value: string) => setFormData(prev => ({ ...prev, presence_status: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Regular">Regular</SelectItem>
-                    <SelectItem value="Irregular">Irregular</SelectItem>
-                    <SelectItem value="Novo">Novo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-lg font-semibold">Endereço</h4>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-lg font-semibold mb-4">Dados do Representante</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="street">Rua</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="representative_name">Nome do Representante</Label>
                   <Input
-                    id="street"
-                    name="street"
-                    value={formData.address.street}
-                    onChange={handleAddressChange}
+                    id="representative_name"
+                    name="representative_name"
+                    value={formData.representative_name}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="number">Número</Label>
+
+                <div className="space-y-2">
+                  <Label htmlFor="representative_birth_date">Data de Nascimento</Label>
                   <Input
-                    id="number"
-                    name="number"
-                    value={formData.address.number}
-                    onChange={handleAddressChange}
+                    id="representative_birth_date"
+                    type="date"
+                    name="representative_birth_date"
+                    value={formData.representative_birth_date}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="representative_gender">Gênero</Label>
+                  <Select 
+                    value={formData.representative_gender} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, representative_gender: value as 'Masculino' | 'Feminino' }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Feminino">Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="people_count">Número de Pessoas na Família</Label>
+                  <Input
+                    id="people_count"
+                    type="number"
+                    name="people_count"
+                    min="1"
+                    value={formData.people_count}
+                    onChange={handleInputChange}
                     required
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="complement">Complemento</Label>
-                  <Input
-                    id="complement"
-                    name="complement"
-                    value={formData.address.complement}
-                    onChange={handleAddressChange}
-                  />
+          {/* Endereço */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-lg font-semibold mb-4">Endereço</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="postal_code">CEP</Label>
+                    <div className="relative">
+                      <Input
+                        id="postal_code"
+                        name="postal_code"
+                        value={formData.address.postal_code}
+                        onChange={handleCepChange}
+                        placeholder="00000-000"
+                        maxLength={8}
+                        required
+                      />
+                      {cepLoading && (
+                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
+                      )}
+                    </div>
+                    {cepError && (
+                      <p className="text-sm text-destructive">{cepError}</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="district">Bairro</Label>
-                  <Input
-                    id="district"
-                    name="district"
-                    value={formData.address.district}
-                    onChange={handleAddressChange}
-                    required
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">Cidade</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    value={formData.address.city}
-                    onChange={handleAddressChange}
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="street">Rua</Label>
+                    <Input
+                      id="street"
+                      name="street"
+                      value={formData.address.street}
+                      onChange={handleAddressChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="number">Número</Label>
+                    <Input
+                      id="number"
+                      name="number"
+                      value={formData.address.number}
+                      onChange={handleAddressChange}
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="complement">Complemento</Label>
+                    <Input
+                      id="complement"
+                      name="complement"
+                      value={formData.address.complement}
+                      onChange={handleAddressChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="district">Bairro</Label>
+                    <Input
+                      id="district"
+                      name="district"
+                      value={formData.address.district}
+                      onChange={handleAddressChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Cidade</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      value={formData.address.city}
+                      onChange={handleAddressChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="state">Estado</Label>
                   <Input
                     id="state"
@@ -318,115 +361,243 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div>
-                <Label htmlFor="postal_code">CEP</Label>
-                <Input
-                  id="postal_code"
-                  name="postal_code"
-                  value={formData.address.postal_code}
-                  onChange={handleAddressChange}
-                  required
-                />
+          {/* Contatos */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Contatos</h3>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddContact}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Contato
+                </Button>
               </div>
-            </div>
+              
+              <div className="space-y-4">
+                {formData.contacts.map((contact, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
+                    <div className="space-y-2">
+                      <Label htmlFor={`contact_type_${index}`}>Tipo</Label>
+                      <Select
+                        value={contact.contact_type}
+                        onValueChange={(value) => handleContactChange(index, 'contact_type', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Telefone">Telefone</SelectItem>
+                          <SelectItem value="Celular">Celular</SelectItem>
+                          <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                          <SelectItem value="Email">Email</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor={`contact_value_${index}`}>Contato</Label>
+                      <Input
+                        id={`contact_value_${index}`}
+                        value={contact.contact_value}
+                        onChange={(e) => handleContactChange(index, 'contact_value', e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor={`contact_note_${index}`}>Observação</Label>
+                      <Input
+                        id={`contact_note_${index}`}
+                        value={contact.contact_note || ''}
+                        onChange={(e) => handleContactChange(index, 'contact_note', e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <Button 
+                        type="button" 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleRemoveContact(index)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                {formData.contacts.length === 0 && (
+                  <p className="text-muted-foreground text-center py-4">
+                    Nenhum contato adicionado
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <h4 className="text-lg font-semibold">Contatos</h4>
-              {formData.contacts.map((contact, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                  <div>
-                    <Label htmlFor={`contact_type_${index}`}>Tipo de Contato</Label>
-                    <Input
-                      id={`contact_type_${index}`}
-                      type="text"
-                      value={contact.contact_type}
-                      onChange={(e) => handleContactChange(index, 'contact_type', e.target.value)}
-                      required
-                    />
+          {/* Crianças */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Crianças</h3>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddChildren}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Criança
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                {formData.children.map((child, index) => (
+                  <div key={index} className="p-4 border rounded-lg space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`child_name_${index}`}>Nome</Label>
+                        <Input
+                          id={`child_name_${index}`}
+                          value={child.name}
+                          onChange={(e) => handleChildrenChange(index, 'name', e.target.value)}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`child_birth_date_${index}`}>Data de Nascimento</Label>
+                        <Input
+                          id={`child_birth_date_${index}`}
+                          type="date"
+                          value={child.birth_date}
+                          onChange={(e) => handleChildrenChange(index, 'birth_date', e.target.value)}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`child_gender_${index}`}>Gênero</Label>
+                        <Select
+                          value={child.gender}
+                          onValueChange={(value) => handleChildrenChange(index, 'gender', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Masculino">Masculino</SelectItem>
+                            <SelectItem value="Feminino">Feminino</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`child_relationship_${index}`}>Parentesco</Label>
+                        <Select
+                          value={child.relationship}
+                          onValueChange={(value) => handleChildrenChange(index, 'relationship', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Filho(a)">Filho(a)</SelectItem>
+                            <SelectItem value="Neto(a)">Neto(a)</SelectItem>
+                            <SelectItem value="Sobrinho(a)">Sobrinho(a)</SelectItem>
+                            <SelectItem value="Outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    {child.birth_date && isChildAdult(child.birth_date) && (
+                      <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          Esta pessoa tem {calculateAge(child.birth_date)} anos e foi marcada como inativa. 
+                          Para maiores de 18 anos, é recomendado fazer um cadastro próprio.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Status:</span>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          child.status === 'Ativo' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {child.status}
+                        </span>
+                        {child.age !== undefined && (
+                          <span className="text-sm text-muted-foreground">
+                            ({child.age} anos)
+                          </span>
+                        )}
+                      </div>
+                      
+                      <Button 
+                        type="button" 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleRemoveChildren(index)}
+                      >
+                        <Trash className="h-4 w-4 mr-2" />
+                        Remover
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor={`contact_value_${index}`}>Contato</Label>
-                    <Input
-                      id={`contact_value_${index}`}
-                      type="text"
-                      value={contact.contact_value}
-                      onChange={(e) => handleContactChange(index, 'contact_value', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveContact(index)}>
-                      <Trash className="h-4 w-4 mr-2" />
-                      Remover
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              <Button type="button" variant="secondary" size="sm" onClick={handleAddContact}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Contato
-              </Button>
-            </div>
+                ))}
+                
+                {formData.children.length === 0 && (
+                  <p className="text-muted-foreground text-center py-4">
+                    Nenhuma criança adicionada
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <h4 className="text-lg font-semibold">Filhos</h4>
-              {formData.children.map((child, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  <div>
-                    <Label htmlFor={`child_name_${index}`}>Nome</Label>
-                    <Input
-                      id={`child_name_${index}`}
-                      type="text"
-                      value={child.name}
-                      onChange={(e) => handleChildrenChange(index, 'name', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`child_birth_date_${index}`}>Data de Nascimento</Label>
-                    <Input
-                      id={`child_birth_date_${index}`}
-                      type="date"
-                      value={child.birth_date}
-                      onChange={(e) => handleChildrenChange(index, 'birth_date', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`child_gender_${index}`}>Gênero</Label>
-                    <Select value={child.gender} onValueChange={(value: string) => {
-                      const newChildren = [...formData.children];
-                      newChildren[index] = { ...newChildren[index], gender: value as 'Masculino' | 'Feminino' };
-                      setFormData(prev => ({ ...prev, children: newChildren }));
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Masculino">Masculino</SelectItem>
-                        <SelectItem value="Feminino">Feminino</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveChildren(index)}>
-                      <Trash className="h-4 w-4 mr-2" />
-                      Remover
-                    </Button>
-                  </div>
+          {/* Outros Dados */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-lg font-semibold mb-4">Outros Dados</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="current_benefit">Benefício Atual</Label>
+                  <Input
+                    id="current_benefit"
+                    name="current_benefit"
+                    value={formData.current_benefit}
+                    onChange={handleInputChange}
+                  />
                 </div>
-              ))}
-              <Button type="button" variant="secondary" size="sm" onClick={handleAddChildren}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Filho
-              </Button>
-            </div>
-          </form>
-        </CardContent>
+
+                <div className="space-y-2">
+                  <Label htmlFor="benefit_status">Status do Benefício</Label>
+                  <Select 
+                    value={formData.benefit_status} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, benefit_status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                      <SelectItem value="Pendente">Pendente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </form>
+        
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <Button type="submit" onClick={handleSubmit}>Salvar</Button>
+          <Button type="submit" onClick={handleSubmit}>
+            {family ? 'Salvar' : 'Cadastrar'}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

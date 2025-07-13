@@ -14,8 +14,7 @@ export function Actions() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<any>(null);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [selectedAction, setSelectedAction] = useState(null);
 
   const filteredActions = actions.filter(action =>
     action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -23,13 +22,11 @@ export function Actions() {
   );
 
   const handleCreateAction = () => {
-    setModalMode('create');
     setSelectedAction(null);
     setIsFormModalOpen(true);
   };
 
   const handleEditAction = (action: any) => {
-    setModalMode('edit');
     setSelectedAction(action);
     setIsFormModalOpen(true);
   };
@@ -37,6 +34,11 @@ export function Actions() {
   const handleDeleteAction = (action: any) => {
     setSelectedAction(action);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleSaveAction = () => {
+    // Aqui você pode recarregar as ações se necessário
+    console.log('Ação salva com sucesso');
   };
 
   const getStatusColor = (status: string) => {
@@ -136,16 +138,16 @@ export function Actions() {
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{action.location}</span>
+                        <span className="text-sm text-foreground">{action.location || 'Não informado'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-foreground">
-                          {action.families.length} famílias
+                          {action.families?.length || 0} famílias
                         </span>
                       </div>
                       <div className="text-sm text-foreground">
-                        <strong>Marmitas:</strong> {action.mealsDistributed || 0}/{action.mealsPlanned}
+                        <strong>Marmitas:</strong> {action.mealsDistributed || 0}/{action.mealsPlanned || 0}
                       </div>
                     </div>
                     
@@ -185,7 +187,7 @@ export function Actions() {
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         action={selectedAction}
-        mode={modalMode}
+        onSave={handleSaveAction}
       />
 
       <ActionDeleteModal

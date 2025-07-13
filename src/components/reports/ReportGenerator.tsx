@@ -1,109 +1,102 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, FileSpreadsheet } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
-import { toast } from '@/components/ui/use-toast';
+import { FileDown, FileSpreadsheet } from 'lucide-react';
+import { Family } from '@/models/Family';
+import { Action } from '@/models/Action';
 
-export function ReportGenerator() {
-  const { families, actions } = useAppStore();
+interface ReportGeneratorProps {
+  families: Family[];
+  actions: Action[];
+}
 
-  const generateFamiliesReport = () => {
-    try {
-      const csvHeader = [
-        'ID',
-        'Nome do Representante',
-        'Endereço',
-        'Telefone',
-        'Número de Membros',
-        'Status',
-        'Benefício Atual',
-        'Status do Benefício',
-        'Observações',
-        'Data de Cadastro'
-      ].join(',');
+export function ReportGenerator({ families, actions }: ReportGeneratorProps) {
+  const generateFamiliesCSV = () => {
+    const headers = [
+      'ID',
+      'Nome do Representante',
+      'Data de Nascimento',
+      'Gênero',
+      'Pessoas na Família',
+      'Crianças',
+      'Benefício Atual',
+      'Status do Benefício',
+      'Endereço',
+      'Cidade',
+      'Estado',
+      'CEP',
+      'Contato',
+      'Tipo de Contato',
+    ];
 
-      const csvData = families.map(family => [
-        family.id,
-        `"${family.name}"`,
-        `"${family.address}"`,
-        `"${family.phone}"`,
-        family.members,
-        family.isActive ? 'Ativa' : 'Inativa',
-        `"${family.currentBenefit || ''}"`,
-        `"${family.benefitStatus || ''}"`,
-        `"${family.notes || ''}"`,
-        new Date(family.createdAt).toLocaleDateString('pt-BR')
-      ].join(',')).join('\n');
+    const csvData = families.map(family => [
+      family.id,
+      family.representative_name,
+      family.representative_birth_date,
+      family.representative_gender,
+      family.people_count,
+      family.children_count,
+      family.current_benefit || 'Não informado',
+      family.benefit_status || 'Não informado',
+      family.address?.street || 'Não informado',
+      family.address?.city || 'Não informado',
+      family.address?.state || 'Não informado',
+      family.address?.postal_code || 'Não informado',
+      family.contacts?.[0]?.contact_value || 'Não informado',
+      family.contacts?.[0]?.contact_type || 'Não informado',
+    ]);
 
-      const csv = csvHeader + '\n' + csvData;
-      downloadCSV(csv, 'relatorio-familias.csv');
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
 
-      toast({
-        title: "Relatório gerado",
-        description: "O relatório de famílias foi baixado com sucesso.",
-      });
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao gerar o relatório de famílias.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const generateActionsReport = () => {
-    try {
-      const csvHeader = [
-        'ID',
-        'Título',
-        'Descrição',
-        'Data',
-        'Local',
-        'Prato do Dia',
-        'Marmitas Planejadas',
-        'Marmitas Distribuídas',
-        'Custo da Ação',
-        'Status'
-      ].join(',');
-
-      const csvData = actions.map(action => [
-        action.id,
-        `"${action.title}"`,
-        `"${action.description || ''}"`,
-        new Date(action.date).toLocaleDateString('pt-BR'),
-        `"${action.location}"`,
-        `"${action.dishOfTheDay || ''}"`,
-        action.mealsPlanned,
-        action.mealsDistributed || 0,
-        `R$ ${(action.actionCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        action.status
-      ].join(',')).join('\n');
-
-      const csv = csvHeader + '\n' + csvData;
-      downloadCSV(csv, 'relatorio-acoes.csv');
-
-      toast({
-        title: "Relatório gerado",
-        description: "O relatório de ações foi baixado com sucesso.",
-      });
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao gerar o relatório de ações.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const downloadCSV = (csv: string, filename: string) => {
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', filename);
+    link.setAttribute('download', `familias_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const generateActionsCSV = () => {
+    const headers = [
+      'ID',
+      'Título',
+      'Descrição',
+      'Data',
+      'Tipo',
+      'Status',
+      'Voluntários',
+      'Famílias Servidas',
+      'Prato do Dia',
+      'Custo (R$)',
+    ];
+
+    const csvData = actions.map(action => [
+      action.id,
+      action.title,
+      action.description,
+      action.date,
+      action.type,
+      action.status,
+      action.volunteer_count,
+      action.families_served,
+      action.dishOfTheDay || 'Não informado',
+      action.actionCost ? `R$ ${action.actionCost.toFixed(2)}` : 'R$ 0,00',
+    ]);
+
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `acoes_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -120,22 +113,13 @@ export function ReportGenerator() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-4">
-            Gere uma planilha com todas as informações das famílias cadastradas.
+          <p className="text-sm text-muted-foreground mb-4">
+            Exportar dados das famílias cadastradas em formato CSV
           </p>
-          <Button 
-            onClick={generateFamiliesReport}
-            className="w-full"
-            disabled={families.length === 0}
-          >
-            <Download className="h-4 w-4 mr-2" />
+          <Button onClick={generateFamiliesCSV} className="w-full">
+            <FileDown className="h-4 w-4 mr-2" />
             Baixar Relatório de Famílias
           </Button>
-          {families.length === 0 && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Nenhuma família cadastrada
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -147,22 +131,13 @@ export function ReportGenerator() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-4">
-            Gere uma planilha com todas as informações das ações realizadas.
+          <p className="text-sm text-muted-foreground mb-4">
+            Exportar dados das ações realizadas em formato CSV
           </p>
-          <Button 
-            onClick={generateActionsReport}
-            className="w-full"
-            disabled={actions.length === 0}
-          >
-            <Download className="h-4 w-4 mr-2" />
+          <Button onClick={generateActionsCSV} className="w-full">
+            <FileDown className="h-4 w-4 mr-2" />
             Baixar Relatório de Ações
           </Button>
-          {actions.length === 0 && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Nenhuma ação cadastrada
-            </p>
-          )}
         </CardContent>
       </Card>
     </div>

@@ -133,10 +133,10 @@ export function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-foreground">
-                        {action.mealsPlanned} marmitas
+                        {action.mealsPlanned || action.families_served} marmitas
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {action.families?.length || 0} famílias
+                        {action.families?.length || action.families_served || 0} famílias
                       </p>
                       {action.actionCost && (
                         <p className="text-xs text-muted-foreground">
