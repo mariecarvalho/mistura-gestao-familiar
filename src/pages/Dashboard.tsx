@@ -14,9 +14,7 @@ export function Dashboard() {
     .filter(action => action.mealsDistributed)
     .reduce((total, action) => total + (action.mealsDistributed || 0), 0);
   
-  const totalActionCost = actions
-    .filter(action => action.actionCost)
-    .reduce((total, action) => total + (action.actionCost || 0), 0);
+  const totalVolunteers = volunteers.length;
 
   // Métricas específicas que serão calculadas quando tivermos dados reais da API
   const familiesWithoutChildren = families.filter(f => f.members === 1).length; // Aproximação
@@ -55,8 +53,8 @@ export function Dashboard() {
       color: 'bg-soft-peach',
     },
     {
-      title: 'Custo das Ações',
-      value: `R$ ${totalActionCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      title: 'Total de Voluntários',
+      value: totalVolunteers,
       icon: DollarSign,
       color: 'bg-green-500',
     },
@@ -125,24 +123,14 @@ export function Dashboard() {
                       <p className="text-sm text-muted-foreground">
                         {new Date(action.date).toLocaleDateString('pt-BR')}
                       </p>
-                      {action.dishOfTheDay && (
-                        <p className="text-xs text-muted-foreground">
-                          Prato: {action.dishOfTheDay}
-                        </p>
-                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-foreground">
-                        {action.mealsPlanned || action.families_served} marmitas
+                        {action.status === 'planned' ? 'Planejada' : action.status === 'completed' ? 'Concluída' : action.status}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {action.families?.length || action.families_served || 0} famílias
+                        {action.families?.length || 0} famílias
                       </p>
-                      {action.actionCost && (
-                        <p className="text-xs text-muted-foreground">
-                          R$ {action.actionCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      )}
                     </div>
                   </div>
                 ))

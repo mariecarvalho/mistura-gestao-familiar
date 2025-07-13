@@ -151,21 +151,6 @@ export function Actions() {
                       </div>
                     </div>
                     
-                    {action.dishOfTheDay && (
-                      <div className="mb-4">
-                        <span className="text-sm text-foreground">
-                          <strong>Prato do Dia:</strong> {action.dishOfTheDay}
-                        </span>
-                      </div>
-                    )}
-
-                    {action.actionCost && (
-                      <div className="mb-4">
-                        <span className="text-sm text-foreground">
-                          <strong>Custo:</strong> R$ {action.actionCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                    )}
                     
                     <div className="flex gap-2">
                       <Button 

@@ -26,10 +26,9 @@ export function Reports() {
     actions: count,
   }));
 
-  // Custo total das ações
-  const totalActionCost = actions
-    .filter(action => action.actionCost)
-    .reduce((total, action) => total + (action.actionCost || 0), 0);
+  // Total de famílias atendidas
+  const totalFamiliesServed = actions
+    .reduce((total, action) => total + (action.families?.length || 0), 0);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -64,11 +63,11 @@ export function Reports() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Custo Total das Ações</CardTitle>
+            <CardTitle>Famílias Atendidas</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              R$ {totalActionCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {totalFamiliesServed}
             </div>
           </CardContent>
         </Card>
@@ -127,7 +126,7 @@ export function Reports() {
           <CardTitle>Exportar Relatórios</CardTitle>
         </CardHeader>
         <CardContent>
-          <ReportGenerator families={families} actions={actions} />
+          {/* ReportGenerator component removed temporarily */}
         </CardContent>
       </Card>
     </div>
