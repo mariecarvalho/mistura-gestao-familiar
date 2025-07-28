@@ -2,15 +2,51 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileDown, FileSpreadsheet } from 'lucide-react';
-import { Family } from '@/models/Family';
-import { Action } from '@/models/Action';
+
+interface Family {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  members: number;
+  notes?: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+interface Action {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  location: string;
+  mealsPlanned: number;
+  mealsDistributed?: number;
+  status: 'planned' | 'in-progress' | 'completed' | 'cancelled';
+  volunteers: string[];
+  families: string[];
+  createdAt: Date;
+}
+
+interface Volunteer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  skills: string[];
+  availability: string[];
+  isActive: boolean;
+  actionsParticipated: number;
+  createdAt: Date;
+}
 
 interface ReportGeneratorProps {
   families: Family[];
   actions: Action[];
+  volunteers: Volunteer[];
 }
 
-export function ReportGenerator({ families, actions }: ReportGeneratorProps) {
+export function ReportGenerator({ families, actions, volunteers }: ReportGeneratorProps) {
   const generateFamiliesCSV = () => {
     const headers = [
       'ID',
@@ -31,19 +67,19 @@ export function ReportGenerator({ families, actions }: ReportGeneratorProps) {
 
     const csvData = families.map(family => [
       family.id,
-      family.representative_name,
-      family.representative_birth_date,
-      family.representative_gender,
-      family.people_count,
-      family.children_count,
-      Array.isArray(family.current_benefit) ? family.current_benefit.join('; ') : (family.current_benefit || 'Não informado'),
-      family.benefit_status || 'Não informado',
-      family.address?.street || 'Não informado',
-      family.address?.city || 'Não informado',
-      family.address?.state || 'Não informado',
-      family.address?.postal_code || 'Não informado',
-      family.contacts?.[0]?.contact_value || 'Não informado',
-      family.contacts?.[0]?.contact_type || 'Não informado',
+      family.name,
+      family.createdAt ? new Date(family.createdAt).toLocaleDateString('pt-BR') : 'Não informado',
+      '',
+      family.members,
+      0,
+      'Não informado',
+      family.isActive ? 'Ativo' : 'Inativo',
+      family.address,
+      '',
+      '',
+      '',
+      family.phone,
+      'Telefone',
     ]);
 
     const csvContent = [headers, ...csvData]
@@ -79,13 +115,13 @@ export function ReportGenerator({ families, actions }: ReportGeneratorProps) {
       action.id,
       action.title,
       action.description,
-      action.date,
-      action.type,
+      action.date ? new Date(action.date).toLocaleDateString('pt-BR') : 'Não informado',
+      'Distribuição de Alimentos',
       action.status,
-      action.volunteer_count,
-      action.families_served,
-      action.dishOfTheDay || 'Não informado',
-      action.actionCost ? `R$ ${action.actionCost.toFixed(2)}` : 'R$ 0,00',
+      action.volunteers?.length || 0,
+      action.families?.length || 0,
+      'Não informado',
+      `R$ ${action.mealsPlanned || 0}`,
     ]);
 
     const csvContent = [headers, ...csvData]
@@ -103,8 +139,48 @@ export function ReportGenerator({ families, actions }: ReportGeneratorProps) {
     document.body.removeChild(link);
   };
 
+  const generateVolunteersCSV = () => {
+    const headers = [
+      'ID',
+      'Nome',
+      'Email',
+      'Telefone',
+      'Habilidades',
+      'Disponibilidade',
+      'Status',
+      'Ações Participadas',
+      'Data de Cadastro',
+    ];
+
+    const csvData = volunteers.map(volunteer => [
+      volunteer.id,
+      volunteer.name,
+      volunteer.email,
+      volunteer.phone,
+      Array.isArray(volunteer.skills) ? volunteer.skills.join('; ') : (volunteer.skills || 'Não informado'),
+      Array.isArray(volunteer.availability) ? volunteer.availability.join('; ') : (volunteer.availability || 'Não informado'),
+      volunteer.isActive ? 'Ativo' : 'Inativo',
+      volunteer.actionsParticipated,
+      volunteer.createdAt ? new Date(volunteer.createdAt).toLocaleDateString('pt-BR') : 'Não informado',
+    ]);
+
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `voluntarios_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -137,6 +213,24 @@ export function ReportGenerator({ families, actions }: ReportGeneratorProps) {
           <Button onClick={generateActionsCSV} className="w-full">
             <FileDown className="h-4 w-4 mr-2" />
             Baixar Relatório de Ações
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5" />
+            Relatório de Voluntários
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Exportar dados dos voluntários cadastrados em formato CSV
+          </p>
+          <Button onClick={generateVolunteersCSV} className="w-full">
+            <FileDown className="h-4 w-4 mr-2" />
+            Baixar Relatório de Voluntários
           </Button>
         </CardContent>
       </Card>

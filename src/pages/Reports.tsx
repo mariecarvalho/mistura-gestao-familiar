@@ -5,7 +5,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export function Reports() {
-  const { families, actions } = useAppStore();
+  const { families, actions, volunteers } = useAppStore();
 
   // Estatísticas das famílias
   const familyStats = [
@@ -126,7 +126,7 @@ export function Reports() {
           <CardTitle>Exportar Relatórios</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* ReportGenerator component removed temporarily */}
+          <ReportGenerator families={families} actions={actions} volunteers={volunteers} />
         </CardContent>
       </Card>
     </div>
