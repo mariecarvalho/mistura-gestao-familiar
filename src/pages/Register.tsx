@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChefHat, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { config } from '@/config/environment';
 
 interface RegisterProps {
   onBackToLogin: () => void;
@@ -18,7 +18,6 @@ export function Register({ onBackToLogin }: RegisterProps) {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'volunteer' as 'admin' | 'volunteer'
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,16 +45,14 @@ export function Register({ onBackToLogin }: RegisterProps) {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${config.API_BASE_URL}/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role
+          role: 'volunteer',
         }),
       });
 
@@ -122,19 +119,6 @@ export function Register({ onBackToLogin }: RegisterProps) {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Função</Label>
-              <Select value={formData.role} onValueChange={(value: 'admin' | 'volunteer') => setFormData({...formData, role: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione sua função" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="volunteer">Voluntário</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
               <Input

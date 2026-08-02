@@ -41,7 +41,6 @@ export function Welcome({ onGetStarted }: WelcomeProps) {
               <h1 className="text-5xl md:text-6xl font-black text-gray-800 mb-4 tracking-tight">
                 Mistura
                 <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent block font-extrabold">
-                  Acolhe
                 </span>
               </h1>
               

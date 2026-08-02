@@ -1,4 +1,4 @@
-import { Child } from "@/models/Child";
+import { Member } from "@/models/Member";
 
 // Transformer para dados da família
 export const transformFamilyDataForAPI = (formData: any) => {
@@ -27,11 +27,11 @@ export const transformFamilyDataForAPI = (formData: any) => {
         contact_note: formData.contact_note || '',
       }
     ],
-    children: formData.children?.map((child: Child) => ({
-      name: child.name,
-      birth_date: child.birth_date,
-      relationship: child.relationship,
-      gender: child.gender,
+    children: formData.members?.map((m: Member) => ({
+      name: m.name,
+      birth_date: m.birth_date,
+      relationship: m.relationship,
+      gender: m.gender,
     })) || []
   };
 };
@@ -86,7 +86,7 @@ export const transformAPIFamilyToForm = (apiData: any) => {
     contact_type: apiData.contacts?.[0]?.contact_type || 'phone',
     contact_value: apiData.contacts?.[0]?.contact_value || '',
     contact_note: apiData.contacts?.[0]?.contact_note || '',
-    children: apiData.children || [],
+    members: apiData.members || apiData.children || [],
   };
 };
 

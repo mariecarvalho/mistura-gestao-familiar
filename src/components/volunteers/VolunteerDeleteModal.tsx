@@ -1,7 +1,8 @@
 
+import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useAppStore } from '@/store/useAppStore';
 import { toast } from '@/components/ui/use-toast';
+import { volunteerService } from '@/services/api/volunteer';
 
 interface VolunteerDeleteModalProps {
   isOpen: boolean;
@@ -10,16 +11,24 @@ interface VolunteerDeleteModalProps {
 }
 
 export function VolunteerDeleteModal({ isOpen, onClose, volunteer }: VolunteerDeleteModalProps) {
-  const { removeVolunteer } = useAppStore();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDelete = () => {
-    removeVolunteer(volunteer.id);
-    toast({
-      title: "Voluntário removido",
-      description: "O voluntário foi removido com sucesso.",
-      variant: "destructive"
-    });
-    onClose();
+  const handleDelete = async () => {
+    setIsLoading(true);
+    try {
+      await volunteerService.delete(volunteer.id);
+      toast({
+        title: 'Voluntário removido',
+        description: 'O voluntário foi removido com sucesso.',
+        variant: 'destructive',
+      });
+      onClose();
+    } catch (error) {
+      console.error('Erro ao deletar voluntário:', error);
+      toast({ title: 'Erro', description: 'Erro ao remover voluntário.', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,9 +42,13 @@ export function VolunteerDeleteModal({ isOpen, onClose, volunteer }: VolunteerDe
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-            Excluir
+          <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive hover:bg-destructive/90"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Excluindo...' : 'Excluir'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

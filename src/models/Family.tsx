@@ -1,5 +1,5 @@
 
-import { Child } from './Child';
+import { Member } from './Member';
 
 export interface Address {
   street: string;
@@ -28,12 +28,14 @@ export interface Family {
   benefit_status: string;
   last_presence_date: string;
   presence_status: string;
+  has_elderly: boolean;
+  is_single_mother: boolean;
   address: Address;
   contacts: Contact[];
-  children: Child[];
+  members: Member[];
   created_at?: string;
   updated_at?: string;
-  // Propriedades para compatibilidade com o store
+  // compatibilidade com o store
   street?: string;
   contact_value?: string;
   contact_note?: string;
@@ -48,9 +50,10 @@ export interface FamilyFormData {
   current_benefit: string[];
   benefit_status: string;
   presence_status: string;
+  is_single_mother: boolean;
   address: Address;
   contacts: Contact[];
-  children: Child[];
+  members: Member[];
 }
 
 export type FamilyOutput = {
@@ -64,6 +67,8 @@ export type FamilyOutput = {
   benefit_status: string;
   last_presence_date: string;
   presence_status: string;
+  has_elderly: boolean;
+  is_single_mother: boolean;
   address: {
     street: string;
     number: string;
@@ -78,14 +83,7 @@ export type FamilyOutput = {
     contact_value: string;
     contact_note?: string;
   }[];
-  children: {
-    name: string;
-    birth_date: string;
-    gender: 'Masculino' | 'Feminino';
-    relationship: string;
-    status: 'Ativo' | 'Inativo';
-    age?: number;
-  }[];
+  members: Member[];
   created_at?: string;
   updated_at?: string;
   street?: string;

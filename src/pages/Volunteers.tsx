@@ -1,21 +1,48 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, UserCheck, Mail, Phone, Edit, Trash2 } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
 import { VolunteerFormModal } from '@/components/volunteers/VolunteerFormModal';
 import { VolunteerDeleteModal } from '@/components/volunteers/VolunteerDeleteModal';
+import { volunteerService } from '@/services/api/volunteer';
+
+export interface Volunteer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  skills: string[];
+  availability: string[];
+  is_active: boolean;
+  actions_participated?: number;
+}
 
 export function Volunteers() {
-  const { volunteers } = useAppStore();
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const fetchVolunteers = async () => {
+    try {
+      const data = await volunteerService.getAll();
+      setVolunteers(data);
+    } catch (error) {
+      console.error('Erro ao buscar voluntários:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVolunteers();
+  }, []);
 
   const filteredVolunteers = volunteers.filter(volunteer =>
     volunteer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -28,13 +55,13 @@ export function Volunteers() {
     setIsFormModalOpen(true);
   };
 
-  const handleEditVolunteer = (volunteer: any) => {
+  const handleEditVolunteer = (volunteer: Volunteer) => {
     setModalMode('edit');
     setSelectedVolunteer(volunteer);
     setIsFormModalOpen(true);
   };
 
-  const handleDeleteVolunteer = (volunteer: any) => {
+  const handleDeleteVolunteer = (volunteer: Volunteer) => {
     setSelectedVolunteer(volunteer);
     setIsDeleteModalOpen(true);
   };
@@ -72,7 +99,9 @@ export function Volunteers() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredVolunteers.length === 0 ? (
+          {isLoading ? (
+            <p className="text-center py-12 text-muted-foreground">Carregando...</p>
+          ) : filteredVolunteers.length === 0 ? (
             <div className="text-center py-12">
               <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
@@ -98,15 +127,15 @@ export function Volunteers() {
                       <div>
                         <CardTitle className="text-lg text-foreground">{volunteer.name}</CardTitle>
                         <p className="text-sm text-muted-foreground">
-                          {volunteer.actionsParticipated} ações participadas
+                          {volunteer.actions_participated ?? 0} ações participadas
                         </p>
                       </div>
                       <div className={`px-2 py-1 rounded-full text-xs ${
-                        volunteer.isActive 
+                        volunteer.is_active 
                           ? 'bg-soft-green text-green-800' 
                           : 'bg-muted text-muted-foreground'
                       }`}>
-                        {volunteer.isActive ? 'Ativo' : 'Inativo'}
+                        {volunteer.is_active ? 'Ativo' : 'Inativo'}
                       </div>
                     </div>
                   </CardHeader>
@@ -122,7 +151,7 @@ export function Volunteers() {
                       </div>
                     </div>
                     
-                    {volunteer.skills.length > 0 && (
+                    {volunteer.skills?.length > 0 && (
                       <div className="mb-4">
                         <p className="text-sm font-medium text-foreground mb-2">Habilidades:</p>
                         <div className="flex flex-wrap gap-1">
@@ -167,11 +196,15 @@ export function Volunteers() {
         onClose={() => setIsFormModalOpen(false)}
         volunteer={selectedVolunteer}
         mode={modalMode}
+        onSave={fetchVolunteers}
       />
 
       <VolunteerDeleteModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          fetchVolunteers();
+        }}
         volunteer={selectedVolunteer}
       />
     </div>

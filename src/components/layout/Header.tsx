@@ -30,7 +30,7 @@ export function Header() {
             <ChefHat className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Mistura Acolhe</h1>
+            <h1 className="text-lg font-semibold text-foreground">Mistura</h1>
             <p className="text-xs text-muted-foreground">Gestão de Famílias e Ações</p>
           </div>
         </div>

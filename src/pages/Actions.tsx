@@ -1,20 +1,60 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Calendar, MapPin, Users, Edit, Trash2 } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
+import { Plus, Search, Calendar, Users, Edit, Trash2, ClipboardList, Soup } from 'lucide-react';
 import { ActionFormModal } from '@/components/actions/ActionFormModal';
 import { ActionDeleteModal } from '@/components/actions/ActionDeleteModal';
+import { ActionPresenceModal } from '@/components/actions/ActionPresenceModal';
+import { actionService } from '@/services/api/actions';
+import { Action } from '@/models/Action';
+import { config } from '@/config/environment';
+import { authHeaders } from '@/services/api/headers';
+
+interface PresenceSummary {
+  families_present: number;
+  meals_realized: number;
+}
 
 export function Actions() {
-  const { actions } = useAppStore();
+  const [actions, setActions] = useState<Action[]>([]);
+  const [summaries, setSummaries] = useState<Record<string, PresenceSummary>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState(null);
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+  const [isPresenceModalOpen, setIsPresenceModalOpen] = useState(false);
+  const [presenceAction, setPresenceAction] = useState<Action | null>(null);
+
+  const fetchActions = async () => {
+    try {
+      const data = await actionService.getAll();
+      setActions(data);
+      // Fetch presence summaries for completed actions
+      const completed = data.filter((a: Action) => a.status === 'completed');
+      const results = await Promise.all(
+        completed.map((a: Action) =>
+          fetch(`${config.API_BASE_URL}/actions/${a.id}/presence/summary`, { headers: authHeaders() })
+            .then(r => r.ok ? r.json() : { families_present: 0, meals_realized: 0 })
+            .catch(() => ({ families_present: 0, meals_realized: 0 }))
+        )
+      );
+      const map: Record<string, PresenceSummary> = {};
+      completed.forEach((a: Action, i: number) => { map[a.id] = results[i]; });
+      setSummaries(map);
+    } catch (error) {
+      console.error('Erro ao buscar ações:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActions();
+  }, []);
 
   const filteredActions = actions.filter(action =>
     action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,19 +66,14 @@ export function Actions() {
     setIsFormModalOpen(true);
   };
 
-  const handleEditAction = (action: any) => {
+  const handleEditAction = (action: Action) => {
     setSelectedAction(action);
     setIsFormModalOpen(true);
   };
 
-  const handleDeleteAction = (action: any) => {
+  const handleDeleteAction = (action: Action) => {
     setSelectedAction(action);
     setIsDeleteModalOpen(true);
-  };
-
-  const handleSaveAction = () => {
-    // Aqui você pode recarregar as ações se necessário
-    console.log('Ação salva com sucesso');
   };
 
   const getStatusColor = (status: string) => {
@@ -94,7 +129,9 @@ export function Actions() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredActions.length === 0 ? (
+          {isLoading ? (
+            <p className="text-center py-12 text-muted-foreground">Carregando...</p>
+          ) : filteredActions.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
@@ -113,72 +150,100 @@ export function Actions() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredActions.map((action) => (
-                <Card key={action.id} className="border-border">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <CardTitle className="text-xl text-foreground">{action.title}</CardTitle>
-                          <Badge className={getStatusColor(action.status)}>
-                            {getStatusText(action.status)}
-                          </Badge>
+              {filteredActions.map((action) => {
+                const summary = summaries[action.id];
+                return (
+                  <Card key={action.id} className="border-border">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <CardTitle className="text-xl text-foreground">{action.title}</CardTitle>
+                            <Badge className={getStatusColor(action.status)}>
+                              {getStatusText(action.status)}
+                            </Badge>
+                          </div>
+                          <p className="text-muted-foreground">{action.description}</p>
                         </div>
-                        <p className="text-muted-foreground">{action.description}</p>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">
-                          {new Date(action.date).toLocaleDateString('pt-BR')}
-                        </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-foreground">
+                            {new Date(action.date).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-foreground">
+                            {action.volunteer_count} voluntários
+                          </span>
+                        </div>
+                        {/* Famílias: Previsto / Realizado */}
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-foreground">
+                            {summary ? (
+                              <>
+                                <span className="text-muted-foreground">Prev:</span> {action.families_served}{' '}
+                                <span className="text-muted-foreground">· Real:</span>{' '}
+                                <span className="font-medium text-green-700">{summary.families_present}</span>
+                              </>
+                            ) : (
+                              <>{action.families_served} famílias</>
+                            )}
+                          </span>
+                        </div>
+                        {/* Marmitas: Previsto / Realizado */}
+                        <div className="flex items-center gap-2">
+                          <Soup className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-foreground">
+                            {summary ? (
+                              <>
+                                <span className="text-muted-foreground">Real:</span>{' '}
+                                <span className="font-medium text-orange-600">{summary.meals_realized} marmitas</span>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">{action.type || 'Não informado'}</span>
+                            )}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{action.location || 'Não informado'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">
-                          {action.families?.length || 0} famílias
-                        </span>
-                      </div>
-                      <div className="text-sm text-foreground">
-                        <strong>Marmitas:</strong> {action.mealsDistributed || 0}/{action.mealsPlanned || 0}
-                      </div>
-                    </div>
-                    
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditAction(action)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Editar
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDeleteAction(action)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Excluir
-                      </Button>
-                      {action.status === 'planned' && (
-                        <Button size="sm" className="bg-warm-orange hover:bg-warm-orange/90">
-                          Iniciar Ação
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditAction(action)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
                         </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          title="Registrar presença"
+                          onClick={() => { setPresenceAction(action); setIsPresenceModalOpen(true); }}
+                        >
+                          <ClipboardList className="h-4 w-4 mr-1" />
+                          Presença
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteAction(action)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Excluir
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -187,14 +252,23 @@ export function Actions() {
       <ActionFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
-        action={selectedAction}
-        onSave={handleSaveAction}
+        action={selectedAction || undefined}
+        onSave={fetchActions}
       />
 
       <ActionDeleteModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          fetchActions();
+        }}
         action={selectedAction}
+      />
+
+      <ActionPresenceModal
+        isOpen={isPresenceModalOpen}
+        onClose={() => { setIsPresenceModalOpen(false); fetchActions(); }}
+        action={presenceAction}
       />
     </div>
   );

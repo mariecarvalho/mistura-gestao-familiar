@@ -2,16 +2,14 @@
 import { useState } from 'react';
 import { Welcome } from '@/pages/Welcome';
 import { Login } from '@/pages/Login';
-import { Register } from '@/pages/Register';
 import { ForgotPassword } from '@/pages/ForgotPassword';
 
-type AuthStep = 'welcome' | 'login' | 'register' | 'forgot-password';
+type AuthStep = 'welcome' | 'login' | 'forgot-password';
 
 export function AuthFlow() {
   const [step, setStep] = useState<AuthStep>('welcome');
 
   const handleGetStarted = () => setStep('login');
-  const handleShowRegister = () => setStep('register');
   const handleShowForgotPassword = () => setStep('forgot-password');
   const handleBackToLogin = () => setStep('login');
 
@@ -19,14 +17,7 @@ export function AuthFlow() {
     case 'welcome':
       return <Welcome onGetStarted={handleGetStarted} />;
     case 'login':
-      return (
-        <Login 
-          onShowRegister={handleShowRegister}
-          onShowForgotPassword={handleShowForgotPassword}
-        />
-      );
-    case 'register':
-      return <Register onBackToLogin={handleBackToLogin} />;
+      return <Login onShowForgotPassword={handleShowForgotPassword} />;
     case 'forgot-password':
       return <ForgotPassword onBackToLogin={handleBackToLogin} />;
     default:

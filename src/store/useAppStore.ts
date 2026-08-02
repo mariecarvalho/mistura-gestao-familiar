@@ -126,7 +126,7 @@ export const useAppStore = create<AppState>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
     }),
     {
-      name: 'mistura-acolhe-storage',
+      name: 'mistura-storage',
     }
   )
 );

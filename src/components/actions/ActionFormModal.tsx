@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -16,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Action, ActionFormData } from '@/models/Action';
+import { actionService } from '@/services/api/actions';
+import { toast } from '@/components/ui/use-toast';
 
 interface ActionFormModalProps {
   action?: Action;
@@ -86,14 +87,18 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
     e.preventDefault();
     
     try {
-      console.log('Dados da ação:', formData);
-      
-      if (onSave) {
-        onSave();
+      if (action) {
+        await actionService.update(action.id, formData);
+        toast({ title: 'Ação atualizada', description: 'Ação atualizada com sucesso.' });
+      } else {
+        await actionService.create(formData);
+        toast({ title: 'Ação criada', description: 'Ação criada com sucesso.' });
       }
+      if (onSave) onSave();
       onClose();
     } catch (error) {
       console.error('Erro ao salvar ação:', error);
+      toast({ title: 'Erro', description: 'Erro ao salvar ação.', variant: 'destructive' });
     }
   };
 
@@ -227,14 +232,13 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
               placeholder="0.00"
             />
           </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button" onClick={onClose}>Cancelar</AlertDialogCancel>
+            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90">
+              {action ? 'Salvar' : 'Criar'}
+            </Button>
+          </AlertDialogFooter>
         </form>
-        
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
-          <Button type="submit" onClick={handleSubmit}>
-            {action ? 'Salvar' : 'Criar'}
-          </Button>
-        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
