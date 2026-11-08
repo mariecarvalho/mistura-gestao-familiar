@@ -1,13 +1,14 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
-import { MisturaIcon } from '@/components/ui/MisturaIcon';
+import { MisturaLogo } from '@/components/ui/MisturaLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { config } from '@/config/environment';
 
 interface LoginProps {
   onShowRegister?: () => void;
@@ -20,6 +21,18 @@ export function Login({ onShowRegister, onShowForgotPassword }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('oauth_error')) {
+      toast({
+        title: "Erro no login com Google",
+        description: "Não foi possível entrar com sua conta Google. Tente novamente.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,25 +70,14 @@ export function Login({ onShowRegister, onShowForgotPassword }: LoginProps) {
   };
 
   const handleGoogleLogin = () => {
-    try {
-      console.log('entrou sss')
-      window.location.href = 'http://localhost:3000/oauth/google';
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao fazer login com Google. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+    window.location.href = `${config.API_BASE_URL}/oauth/google`;
   };
 
   return (
     <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-warm-orange rounded-full flex items-center justify-center mx-auto mb-4">
-            <MisturaIcon className="h-10 w-10 text-white" />
-          </div>
+          <MisturaLogo className="h-24 w-auto mx-auto mb-4 text-primary" />
           <CardTitle className="text-2xl font-bold">Bem-vindo de volta</CardTitle>
           <CardDescription>
             Entre com suas credenciais para acessar o sistema
@@ -130,6 +132,30 @@ export function Login({ onShowRegister, onShowForgotPassword }: LoginProps) {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">ou</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleLogin}
+          >
+            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z" />
+              <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z" />
+              <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1z" />
+              <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9z" />
+            </svg>
+            Entrar com Google
+          </Button>
 
           <div className="mt-6 text-center space-y-2">
             {onShowForgotPassword && (

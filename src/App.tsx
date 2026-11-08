@@ -18,11 +18,17 @@ import { Donations } from "./pages/Donations";
 import { Users } from "./pages/Users";
 import { VolunteerPortal } from "./pages/VolunteerPortal";
 import NotFound from "./pages/NotFound";
+import { Privacy, Terms } from "./pages/Legal";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
   const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Páginas públicas exigidas pelo Google (tela de consentimento OAuth)
+  const path = window.location.pathname.replace(/\/+$/, '');
+  if (path === '/privacidade') return <Privacy />;
+  if (path === '/termos') return <Terms />;
 
   if (isLoading) {
     return (

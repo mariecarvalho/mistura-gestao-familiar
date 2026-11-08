@@ -1,101 +1,81 @@
 
 import { Button } from '@/components/ui/button';
-import { Heart, Users, Calendar, ArrowRight, Sparkles } from 'lucide-react';
-import { MisturaIcon } from '@/components/ui/MisturaIcon';
-import { useState, useEffect } from 'react';
+import { Heart, Users, Calendar, ArrowRight } from 'lucide-react';
+import { MisturaLogo } from '@/components/ui/MisturaLogo';
 
 interface WelcomeProps {
   onGetStarted: () => void;
 }
 
+const features = [
+  { icon: Users, title: 'Famílias', description: 'Gerencie e acompanhe' },
+  { icon: Calendar, title: 'Ações', description: 'Organize eventos' },
+  { icon: Heart, title: 'Voluntários', description: 'Coordene equipes' },
+];
+
 export function Welcome({ onGetStarted }: WelcomeProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
-
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-100">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-orange-200/30 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute bottom-32 right-32 w-40 h-40 bg-orange-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-100/40 rounded-full blur-3xl"></div>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Topo laranja com onda */}
+      <section className="bg-hero relative text-white">
+        <div className="max-w-3xl mx-auto px-6 pt-10 pb-28">
+          <MisturaLogo className="h-28 w-auto mb-8" />
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+            Conectando pessoas,<br />ações e solidariedade.
+          </h1>
+          <p className="text-lg md:text-xl mt-3 leading-snug font-medium text-white/90">
+            Gestão integrada para projetos sociais.
+          </p>
+          <span className="block mt-5 h-1 w-40 rounded-full bg-white/80" />
+        </div>
+        <svg
+          className="absolute bottom-0 left-0 w-full h-14 fill-background"
+          viewBox="0 0 1440 120"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path d="M0 70C240 118 480 24 720 54C960 84 1200 112 1440 40V120H0Z" />
+        </svg>
+      </section>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
-        <div className={`max-w-4xl mx-auto text-center transition-all duration-1000 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}>
-          
-          {/* Hero Section */}
-          <div className="mb-16">
-            <div className="relative mb-12">
-              <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl hover:scale-110 transition-transform duration-500 relative">
-                <MisturaIcon className="h-14 w-14 text-white" />
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center">
-                  <Sparkles className="h-3 w-3 text-white" />
-                </div>
-              </div>
-              
-              <h1 className="text-5xl md:text-6xl font-black text-gray-800 mb-4 tracking-tight">
-                Mistura
-                <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent block font-extrabold">
-                </span>
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed font-medium">
-                Transformando vidas através da <span className="font-bold text-orange-600">organização</span> e{' '}
-                <span className="font-bold text-orange-600">solidariedade</span>
-              </p>
-              
-              <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed mb-12">
-                Sistema completo de gestão para projetos sociais
-              </p>
-            </div>
+      <main className="max-w-3xl mx-auto px-6 pb-16 space-y-8">
+        {/* Missão */}
+        <div className="flex items-center gap-4 rounded-2xl border bg-secondary/60 p-5">
+          <div className="w-14 h-14 shrink-0 rounded-full bg-secondary flex items-center justify-center">
+            <Heart className="h-7 w-7 text-primary" />
           </div>
-
-          {/* Simple Features */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16 max-w-3xl mx-auto">
-            <div className="group text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors duration-300">
-                <Users className="h-8 w-8 text-orange-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Famílias</h3>
-              <p className="text-gray-600 text-sm">Gerencie e acompanhe</p>
-            </div>
-
-            <div className="group text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors duration-300">
-                <Calendar className="h-8 w-8 text-orange-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Ações</h3>
-              <p className="text-gray-600 text-sm">Organize eventos</p>
-            </div>
-
-            <div className="group text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors duration-300">
-                <Heart className="h-8 w-8 text-orange-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Voluntários</h3>
-              <p className="text-gray-600 text-sm">Coordene equipes</p>
-            </div>
-          </div>
-
-          {/* CTA Section */}
-          <div className="space-y-6">
-            <Button 
-              onClick={onGetStarted}
-              size="lg"
-              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-12 py-4 text-xl shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl group border-0"
-            >
-              Começar Agora
-              <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </Button>
+          <div>
+            <h2 className="text-lg font-bold">Nossa missão</h2>
+            <p className="text-muted-foreground">
+              Transformando vidas através da organização e tecnologia
+            </p>
           </div>
         </div>
-      </div>
+
+        {/* Funcionalidades */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {features.map(({ icon: Icon, title, description }) => (
+            <div key={title} className="rounded-2xl border bg-card p-5 text-center shadow-sm">
+              <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mx-auto mb-3">
+                <Icon className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="font-bold">{title}</h3>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-center pt-2">
+          <Button
+            onClick={onGetStarted}
+            size="lg"
+            className="rounded-2xl px-10 h-14 text-lg font-semibold shadow-lg group"
+          >
+            Começar Agora
+            <ArrowRight className="ml-1 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </div>
+      </main>
     </div>
   );
 }

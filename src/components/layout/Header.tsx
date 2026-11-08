@@ -15,24 +15,24 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-border px-6 flex items-center justify-between shadow-sm">
+    <header className="h-16 bg-hero text-white px-6 flex items-center justify-between shadow-md">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden"
+          className="lg:hidden text-white hover:bg-white/20 hover:text-white"
         >
           <Menu className="h-5 w-5" />
         </Button>
         
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-warm-orange rounded-lg flex items-center justify-center">
+          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
             <MisturaIcon className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Mistura</h1>
-            <p className="text-xs text-muted-foreground">Gestão de Famílias e Ações</p>
+            <h1 className="text-lg font-bold">Mistura</h1>
+            <p className="text-xs text-white/80">Gestão de Famílias e Ações</p>
           </div>
         </div>
       </div>
@@ -40,13 +40,14 @@ export function Header() {
       <div className="flex items-center gap-4">
         <div className="text-right">
           <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
-          <p className="text-xs text-muted-foreground">{user?.role || 'Administrador'}</p>
+          <p className="text-xs text-white/80">{user?.role || 'Administrador'}</p>
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={handleLogout}
           title="Sair"
+          className="text-white hover:bg-white/20 hover:text-white"
         >
           <LogOut className="h-4 w-4" />
         </Button>
