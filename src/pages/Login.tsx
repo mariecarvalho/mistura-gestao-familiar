@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChefHat, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { MisturaIcon } from '@/components/ui/MisturaIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -73,7 +74,7 @@ export function Login({ onShowRegister, onShowForgotPassword }: LoginProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="w-16 h-16 bg-warm-orange rounded-full flex items-center justify-center mx-auto mb-4">
-            <ChefHat className="h-8 w-8 text-white" />
+            <MisturaIcon className="h-10 w-10 text-white" />
           </div>
           <CardTitle className="text-2xl font-bold">Bem-vindo de volta</CardTitle>
           <CardDescription>

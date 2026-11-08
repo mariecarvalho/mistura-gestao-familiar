@@ -1,6 +1,7 @@
 
 import { Button } from '@/components/ui/button';
-import { Menu, ChefHat, LogOut } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
+import { MisturaIcon } from '@/components/ui/MisturaIcon';
 // import { Heart } from 'lucide-react'; // Mantendo comentado conforme solicitado
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,7 +28,7 @@ export function Header() {
         
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-warm-orange rounded-lg flex items-center justify-center">
-            <ChefHat className="h-5 w-5 text-white" />
+            <MisturaIcon className="h-6 w-6 text-white" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-foreground">Mistura</h1>

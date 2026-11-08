@@ -1,6 +1,7 @@
 
 import { Button } from '@/components/ui/button';
-import { Heart, Users, Calendar, HandHeart, ArrowRight, Sparkles } from 'lucide-react';
+import { Heart, Users, Calendar, ArrowRight, Sparkles } from 'lucide-react';
+import { MisturaIcon } from '@/components/ui/MisturaIcon';
 import { useState, useEffect } from 'react';
 
 interface WelcomeProps {
@@ -32,7 +33,7 @@ export function Welcome({ onGetStarted }: WelcomeProps) {
           <div className="mb-16">
             <div className="relative mb-12">
               <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl hover:scale-110 transition-transform duration-500 relative">
-                <HandHeart className="h-12 w-12 text-white" />
+                <MisturaIcon className="h-14 w-14 text-white" />
                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
@@ -92,10 +93,6 @@ export function Welcome({ onGetStarted }: WelcomeProps) {
               Começar Agora
               <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
             </Button>
-            
-            <div className="text-gray-500 text-base font-medium">
-              <p>✨ Feito com carinho para transformar comunidades</p>
-            </div>
           </div>
         </div>
       </div>
