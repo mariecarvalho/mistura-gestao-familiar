@@ -94,15 +94,15 @@ export function VolunteerFormModal({ isOpen, onClose, volunteer, mode, onSave }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl p-4 sm:p-6">
+        <DialogHeader className="text-left">
           <DialogTitle>
             {mode === 'create' ? 'Cadastrar Novo Voluntário' : 'Editar Voluntário'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+          <div className="space-y-3.5 sm:space-y-4">
             <div>
               <Label htmlFor="name">Nome Completo *</Label>
               <Input
@@ -113,7 +113,7 @@ export function VolunteerFormModal({ isOpen, onClose, volunteer, mode, onSave }:
               {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <Label htmlFor="email">Email *</Label>
                 <Input
@@ -138,7 +138,7 @@ export function VolunteerFormModal({ isOpen, onClose, volunteer, mode, onSave }:
 
             <div>
               <Label>Habilidades</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                 {skillsOptions.map((skill) => (
                   <div key={skill} className="flex items-center space-x-2">
                     <Checkbox
@@ -154,7 +154,7 @@ export function VolunteerFormModal({ isOpen, onClose, volunteer, mode, onSave }:
 
             <div>
               <Label>Disponibilidade</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                 {availabilityOptions.map((day) => (
                   <div key={day} className="flex items-center space-x-2">
                     <Checkbox
@@ -168,7 +168,7 @@ export function VolunteerFormModal({ isOpen, onClose, volunteer, mode, onSave }:
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 pt-1">
               <Checkbox
                 id="isActive"
                 defaultChecked={mode === 'create' ? true : (volunteer?.is_active ?? true)}
@@ -178,9 +178,9 @@ export function VolunteerFormModal({ isOpen, onClose, volunteer, mode, onSave }:
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90" disabled={isLoading}>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">Cancelar</Button>
+            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto" disabled={isLoading}>
               {isLoading ? 'Salvando...' : mode === 'create' ? 'Cadastrar' : 'Atualizar'}
             </Button>
           </DialogFooter>

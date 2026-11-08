@@ -50,21 +50,21 @@ export function VolunteerPortal() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Perfil */}
-      <div className="flex items-center gap-4 p-6 bg-warm-orange/10 rounded-xl border border-warm-orange/20">
-        <div className="w-16 h-16 rounded-full bg-warm-orange flex items-center justify-center text-white text-2xl font-bold">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3.5 sm:gap-4 p-4 sm:p-6 bg-warm-orange/10 rounded-xl border border-warm-orange/20">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-warm-orange flex items-center justify-center text-white text-xl sm:text-2xl font-bold shrink-0 shadow-xs">
           {user?.name?.charAt(0).toUpperCase()}
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{user?.name}</h1>
-          <p className="text-muted-foreground">{user?.email}</p>
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{user?.name}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground break-all">{user?.email}</p>
           <Badge className="mt-1 bg-warm-orange text-white">Voluntário</Badge>
         </div>
       </div>
 
       {/* Resumo rápido */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Próximas Ações</CardTitle>
@@ -110,7 +110,7 @@ export function VolunteerPortal() {
           ) : (
             <div className="space-y-3">
               {upcoming.map(action => (
-                <div key={action.id} className="flex items-start justify-between p-4 border rounded-lg gap-4">
+                <div key={action.id} className="flex flex-col sm:flex-row sm:items-start justify-between p-3.5 sm:p-4 border rounded-lg gap-3 sm:gap-4 bg-card">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-semibold text-foreground">{action.title}</span>
@@ -118,14 +118,14 @@ export function VolunteerPortal() {
                         {statusLabel[action.status] ?? action.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{action.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">{action.description}</p>
+                    <div className="flex items-center gap-3 sm:gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3.5 w-3.5" />
                         {new Date(action.date).toLocaleDateString('pt-BR')}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
+                        <Users className="h-3.5 w-3.5" />
                         {action.volunteer_count} voluntários esperados
                       </span>
                     </div>
@@ -134,10 +134,10 @@ export function VolunteerPortal() {
                   {/* Botão de presença: disponível para ações em andamento E planejadas */}
                   <Button
                     size="sm"
-                    className="bg-warm-orange hover:bg-warm-orange/90 shrink-0"
+                    className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto shrink-0"
                     onClick={() => setPresenceAction(action)}
                   >
-                    <ClipboardList className="h-4 w-4 mr-1" />
+                    <ClipboardList className="h-4 w-4 mr-1.5" />
                     Registrar Presença
                   </Button>
                 </div>
@@ -159,14 +159,14 @@ export function VolunteerPortal() {
           <CardContent>
             <div className="space-y-3">
               {past.map(action => (
-                <div key={action.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/40 gap-4">
+                <div key={action.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border rounded-lg bg-muted/40 gap-3 sm:gap-4">
                   <div>
                     <p className="font-medium text-foreground">{action.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {new Date(action.date).toLocaleDateString('pt-BR')} · {action.families_served} famílias previstas
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                     <Badge className="bg-green-100 text-green-800">Concluída</Badge>
                     {/* Voluntário pode corrigir presenças mesmo após conclusão */}
                     <Button
@@ -174,7 +174,7 @@ export function VolunteerPortal() {
                       variant="outline"
                       onClick={() => setPresenceAction(action)}
                     >
-                      <ClipboardList className="h-4 w-4 mr-1" />
+                      <ClipboardList className="h-3.5 w-3.5 mr-1" />
                       Ver Presença
                     </Button>
                   </div>

@@ -99,20 +99,20 @@ export function Donations() {
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Cabeçalho */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Arrecadações</h1>
-          <p className="text-muted-foreground">Registre doações e entradas no caixa do projeto</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Arrecadações</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Registre doações e entradas no caixa do projeto</p>
         </div>
-        <Button className="bg-warm-orange hover:bg-warm-orange/90" onClick={openCreate}>
+        <Button className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto shrink-0" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" /> Nova Arrecadação
         </Button>
       </div>
 
       {/* Cards de totais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Recebido</CardTitle>
@@ -174,28 +174,28 @@ export function Donations() {
           ) : (
             <div className="space-y-3">
               {filtered.map(d => (
-                <div key={d.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                <div key={d.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border rounded-lg bg-card gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
                       <span className="font-semibold text-foreground truncate">{d.type}</span>
                       <Badge className={d.status === 'Recebido' ? 'bg-soft-green text-green-800' : 'bg-warm-yellow text-yellow-800'}>
                         {d.status}
                       </Badge>
                     </div>
                     {d.description && (
-                      <p className="text-sm text-muted-foreground truncate">{d.description}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{d.description}</p>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
                       {new Date(d.date).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-4 ml-4">
-                    <span className="text-lg font-bold text-green-700 whitespace-nowrap">{fmt(Number(d.amount))}</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
+                    <span className="text-base sm:text-lg font-bold text-green-700 whitespace-nowrap">{fmt(Number(d.amount))}</span>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(d)}>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(d)} className="h-8 w-8">
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openDelete(d)}>
+                      <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => openDelete(d)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

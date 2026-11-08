@@ -65,24 +65,24 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral do Projeto Mistura</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">Visão geral do Projeto Mistura</p>
       </div>
 
       {/* Contadores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="border-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-              <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center`}>
-                <stat.icon className="h-5 w-5 text-white" />
+          <Card key={stat.title} className="border-border shadow-xs">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground line-clamp-1">{stat.title}</CardTitle>
+              <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg ${stat.color} flex items-center justify-center shrink-0`}>
+                <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-lg sm:text-2xl font-bold text-foreground truncate">
                 {stat.isCurrency ? fmt(stat.value) : stat.value.toLocaleString('pt-BR')}
               </div>
             </CardContent>

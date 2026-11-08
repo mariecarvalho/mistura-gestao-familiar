@@ -159,13 +159,13 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-warm-orange rounded-full flex items-center justify-center mx-auto mb-4">
-            {step === 'email' ? <Mail className="h-8 w-8 text-white" /> : <MisturaIcon className="h-10 w-10 text-white" />}
+    <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-3 sm:p-6 py-8">
+      <Card className="w-full max-w-md shadow-xl border-border/60">
+        <CardHeader className="text-center px-4 sm:px-6 pt-6 pb-4">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-warm-orange rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-xs">
+            {step === 'email' ? <Mail className="h-7 w-7 sm:h-8 sm:w-8 text-white" /> : <MisturaIcon className="h-8 w-8 sm:h-10 sm:w-10 text-white" />}
           </div>
-          <CardTitle className="text-2xl font-bold">
+          <CardTitle className="text-xl sm:text-2xl font-bold">
             {step === 'email' && 'Recuperar Senha'}
             {step === 'code' && 'Verificar Código'}
             {step === 'reset' && 'Nova Senha'}

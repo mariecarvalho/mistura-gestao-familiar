@@ -97,16 +97,16 @@ export function Actions() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Ações</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Ações</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Gerencie as ações de distribuição de marmitas
           </p>
         </div>
-        <Button 
-          className="bg-warm-orange hover:bg-warm-orange/90"
+        <Button
+          className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto shrink-0"
           onClick={handleCreateAction}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -168,22 +168,22 @@ export function Actions() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-4">
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="text-sm text-foreground">
                             {new Date(action.date).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="text-sm text-foreground">
                             {action.volunteer_count} voluntários
                           </span>
                         </div>
                         {/* Famílias: Previsto / Realizado */}
                         <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="text-sm text-foreground">
                             {summary ? (
                               <>
@@ -198,7 +198,7 @@ export function Actions() {
                         </div>
                         {/* Marmitas: Previsto / Realizado */}
                         <div className="flex items-center gap-2">
-                          <Soup className="h-4 w-4 text-muted-foreground" />
+                          <Soup className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="text-sm text-foreground">
                             {summary ? (
                               <>
@@ -212,13 +212,14 @@ export function Actions() {
                         </div>
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border/50">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditAction(action)}
+                          className="flex-1 min-w-[90px]"
                         >
-                          <Edit className="h-4 w-4 mr-1" />
+                          <Edit className="h-3.5 w-3.5 mr-1" />
                           Editar
                         </Button>
                         <Button
@@ -226,18 +227,19 @@ export function Actions() {
                           size="sm"
                           title="Registrar presença"
                           onClick={() => { setPresenceAction(action); setIsPresenceModalOpen(true); }}
+                          className="flex-1 min-w-[100px] text-warm-orange hover:text-warm-orange"
                         >
-                          <ClipboardList className="h-4 w-4 mr-1" />
+                          <ClipboardList className="h-3.5 w-3.5 mr-1" />
                           Presença
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteAction(action)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive px-3"
+                          title="Excluir ação"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Excluir
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </CardContent>

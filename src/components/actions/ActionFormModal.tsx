@@ -104,8 +104,8 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <AlertDialogHeader>
+      <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <AlertDialogHeader className="text-left">
           <AlertDialogTitle>
             {action ? 'Editar Ação' : 'Nova Ação'}
           </AlertDialogTitle>
@@ -114,7 +114,7 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
           </AlertDialogDescription>
         </AlertDialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Título</Label>
             <Input
@@ -137,8 +137,8 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="date">Data</Label>
               <Input
                 id="date"
@@ -150,7 +150,7 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="type">Tipo</Label>
               <Select value={formData.type} onValueChange={(value) => handleSelectChange('type', value)}>
                 <SelectTrigger>
@@ -165,7 +165,7 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
               <SelectTrigger>
@@ -180,8 +180,8 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="volunteer_count">Número de Voluntários</Label>
               <Input
                 id="volunteer_count"
@@ -194,7 +194,7 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="families_served">Número de Famílias Servidas</Label>
               <Input
                 id="families_served"
@@ -232,9 +232,9 @@ export function ActionFormModal({ action, isOpen, onClose, onSave }: ActionFormM
               placeholder="0.00"
             />
           </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel type="button" onClick={onClose}>Cancelar</AlertDialogCancel>
-            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90">
+          <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
+            <AlertDialogCancel type="button" onClick={onClose} className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto">
               {action ? 'Salvar' : 'Criar'}
             </Button>
           </AlertDialogFooter>

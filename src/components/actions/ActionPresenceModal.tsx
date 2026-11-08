@@ -107,15 +107,19 @@ export function ActionPresenceModal({ isOpen, onClose, action }: Props) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Registrar Presença — {action?.title}</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            {new Date(action?.date ?? '').toLocaleDateString('pt-BR')} ·{' '}
-            <span className="font-medium text-green-700">{presentCount} presente{presentCount !== 1 ? 's' : ''}</span>
-            {' / '}{families.length} famílias
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-4 sm:p-6">
+        <DialogHeader className="text-left">
+          <DialogTitle className="text-lg sm:text-xl">Registrar Presença — {action?.title}</DialogTitle>
+          <p className="text-xs sm:text-sm text-muted-foreground flex flex-wrap items-center gap-1">
+            <span>{new Date(action?.date ?? '').toLocaleDateString('pt-BR')}</span>
+            <span>·</span>
+            <span className="font-semibold text-green-700">{presentCount} presente{presentCount !== 1 ? 's' : ''}</span>
+            <span>/ {families.length} famílias</span>
             {presentCount > 0 && (
-              <> · <span className="font-medium text-orange-600">{mealsRealized} marmita{mealsRealized !== 1 ? 's' : ''}</span></>
+              <>
+                <span>·</span>
+                <span className="font-semibold text-orange-600">{mealsRealized} marmita{mealsRealized !== 1 ? 's' : ''}</span>
+              </>
             )}
           </p>
         </DialogHeader>
@@ -126,13 +130,13 @@ export function ActionPresenceModal({ isOpen, onClose, action }: Props) {
             placeholder="Buscar família..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10"
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-1 pr-1 min-h-0">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[200px] max-h-[50vh]">
           {loading ? (
-            <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2" />
@@ -141,31 +145,34 @@ export function ActionPresenceModal({ isOpen, onClose, action }: Props) {
           ) : filtered.map(f => (
             <div
               key={f.id}
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                f.present ? 'bg-green-50 border-green-200' : 'hover:bg-muted border-transparent'
+              className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl border transition-colors ${
+                f.present ? 'bg-green-50/80 border-green-200' : 'hover:bg-muted border-border/50'
               }`}
             >
-              <Checkbox
-                checked={f.present}
-                onCheckedChange={() => toggle(f.id)}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{f.representative_name}</p>
-                <p className="text-xs text-muted-foreground">{f.people_count} membros</p>
+              <div className="flex items-center gap-3 min-w-0">
+                <Checkbox
+                  checked={f.present}
+                  onCheckedChange={() => toggle(f.id)}
+                  className="h-5 w-5 rounded-md shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{f.representative_name}</p>
+                  <p className="text-xs text-muted-foreground">{f.people_count} membros</p>
+                </div>
+                <Badge className={f.benefit_status === 'Ativo' ? 'bg-soft-green text-green-800 text-xs shrink-0' : 'bg-slate-100 text-slate-500 text-xs shrink-0'}>
+                  {f.benefit_status}
+                </Badge>
               </div>
-              <Badge className={f.benefit_status === 'Ativo' ? 'bg-soft-green text-green-800' : 'bg-slate-100 text-slate-500'}>
-                {f.benefit_status}
-              </Badge>
               {f.present && (
-                <div className="flex items-center gap-1 shrink-0">
-                  <label className="text-xs text-muted-foreground whitespace-nowrap">Marmitas:</label>
+                <div className="flex items-center justify-end gap-2 shrink-0 pl-8 sm:pl-0 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-green-200/50">
+                  <label className="text-xs text-muted-foreground whitespace-nowrap font-medium">Marmitas:</label>
                   <Input
                     type="number"
                     min={0}
                     value={f.meals_taken}
                     onChange={e => setMeals(f.id, Number(e.target.value))}
                     onClick={e => e.stopPropagation()}
-                    className="w-16 h-7 text-sm px-2"
+                    className="w-20 h-8 text-sm px-2 text-center font-semibold bg-white"
                   />
                 </div>
               )}
@@ -173,10 +180,10 @@ export function ActionPresenceModal({ isOpen, onClose, action }: Props) {
           ))}
         </div>
 
-        <DialogFooter className="pt-2 border-t">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+        <DialogFooter className="pt-3 border-t flex flex-col-reverse sm:flex-row gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">Cancelar</Button>
           <Button
-            className="bg-warm-orange hover:bg-warm-orange/90"
+            className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto"
             onClick={handleSave}
             disabled={saving || changed.size === 0}
           >

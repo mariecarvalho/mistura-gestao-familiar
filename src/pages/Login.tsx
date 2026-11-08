@@ -74,12 +74,12 @@ export function Login({ onShowRegister, onShowForgotPassword }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <MisturaLogo className="h-24 w-auto mx-auto mb-4 text-primary" />
-          <CardTitle className="text-2xl font-bold">Bem-vindo de volta</CardTitle>
-          <CardDescription>
+    <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-3 sm:p-6 py-8">
+      <Card className="w-full max-w-md shadow-xl border-border/60">
+        <CardHeader className="text-center px-4 sm:px-6 pt-6 pb-4">
+          <MisturaLogo className="h-20 sm:h-24 w-auto mx-auto mb-3 sm:mb-4 text-primary" />
+          <CardTitle className="text-xl sm:text-2xl font-bold">Bem-vindo de volta</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Entre com suas credenciais para acessar o sistema
           </CardDescription>
         </CardHeader>

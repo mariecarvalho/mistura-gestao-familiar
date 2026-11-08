@@ -71,26 +71,26 @@ export function Families() {
   const countInativo = families.filter(f => f.benefit_status !== 'Ativo').length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Famílias</h1>
-          <p className="text-muted-foreground">Gerencie as famílias beneficiadas pelo projeto</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Famílias</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gerencie as famílias beneficiadas pelo projeto</p>
         </div>
-        <Button className="bg-warm-orange hover:bg-warm-orange/90" onClick={() => { setSelectedFamily(null); setIsFormModalOpen(true); }}>
+        <Button className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto shrink-0" onClick={() => { setSelectedFamily(null); setIsFormModalOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" /> Nova Família
         </Button>
       </div>
 
       {/* Filtros rápidos */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {(['all', 'Ativo', 'Inativo'] as const).map(s => (
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium border transition-colors whitespace-nowrap shrink-0 ${
               statusFilter === s
-                ? 'bg-warm-orange text-white border-warm-orange'
+                ? 'bg-warm-orange text-white border-warm-orange shadow-xs'
                 : 'border-border text-muted-foreground hover:bg-muted'
             }`}
           >
@@ -158,23 +158,25 @@ export function Families() {
                           <p><strong>Benefícios:</strong> {family.current_benefit.join(', ')}</p>
                         )}
                       </div>
-                      <div className="flex gap-1 flex-wrap">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setSelectedFamily(family); setIsFormModalOpen(true); }}>
-                          <Edit className="h-4 w-4 mr-1" /> Editar
+                      <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-border/50">
+                        <Button variant="outline" size="sm" className="flex-1 min-w-[80px]" onClick={() => { setSelectedFamily(family); setIsFormModalOpen(true); }}>
+                          <Edit className="h-3.5 w-3.5 mr-1" /> Editar
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           title="Ver / registrar presença"
                           onClick={() => handlePresence(family)}
+                          className="px-2.5"
                         >
-                          <ClipboardList className="h-4 w-4" />
+                          <ClipboardList className="h-4 w-4 text-warm-orange" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           title={isActive ? 'Inativar família' : 'Ativar família'}
                           onClick={() => handleToggleStatus(family)}
+                          className="px-2.5"
                         >
                           {isActive
                             ? <ToggleRight className="h-4 w-4 text-green-600" />
@@ -184,7 +186,8 @@ export function Families() {
                           variant="outline"
                           size="sm"
                           onClick={() => { setSelectedFamily(family); setIsDeleteModalOpen(true); }}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive px-2.5"
+                          title="Excluir família"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

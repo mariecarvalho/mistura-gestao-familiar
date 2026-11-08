@@ -67,16 +67,16 @@ export function Volunteers() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Voluntários</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Voluntários</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Gerencie os voluntários do projeto
           </p>
         </div>
-        <Button 
-          className="bg-warm-orange hover:bg-warm-orange/90"
+        <Button
+          className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto shrink-0"
           onClick={handleCreateVolunteer}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -141,22 +141,22 @@ export function Volunteers() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{volunteer.email}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-foreground truncate break-all">{volunteer.email}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{volunteer.phone}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-foreground truncate">{volunteer.phone}</span>
                       </div>
                     </div>
                     
                     {volunteer.skills?.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-sm font-medium text-foreground mb-2">Habilidades:</p>
+                        <p className="text-xs sm:text-sm font-medium text-foreground mb-1.5">Habilidades:</p>
                         <div className="flex flex-wrap gap-1">
                           {volunteer.skills.map((skill: string, index: number) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
+                            <Badge key={index} variant="secondary" className="text-[11px] sm:text-xs">
                               {skill}
                             </Badge>
                           ))}
@@ -164,21 +164,22 @@ export function Volunteers() {
                       </div>
                     )}
                     
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                    <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="flex-1"
                         onClick={() => handleEditVolunteer(volunteer)}
                       >
-                        <Edit className="h-4 w-4 mr-1" />
+                        <Edit className="h-3.5 w-3.5 mr-1" />
                         Editar
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handleDeleteVolunteer(volunteer)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive px-3"
+                        title="Excluir voluntário"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

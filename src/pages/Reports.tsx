@@ -167,14 +167,14 @@ export function Reports() {
     .reverse();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Relatórios</h1>
-        <p className="text-muted-foreground">Análises e exportação de dados do projeto</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Relatórios</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">Análises e exportação de dados do projeto</p>
       </div>
 
       {/* Contadores */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4">
         {counters.map(c => (
           <Card key={c.label} className="border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-4">

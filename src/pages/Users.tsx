@@ -94,13 +94,13 @@ export function Users() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Gerenciar Acessos</h1>
-          <p className="text-muted-foreground">Crie e gerencie usuários do portal</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gerenciar Acessos</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Crie e gerencie usuários do portal</p>
         </div>
-        <Button className="bg-warm-orange hover:bg-warm-orange/90" onClick={() => setFormOpen(true)}>
+        <Button className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto shrink-0" onClick={() => setFormOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> Novo Acesso
         </Button>
       </div>
@@ -119,9 +119,9 @@ export function Users() {
           ) : (
             <div className="space-y-3">
               {users.map(user => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border rounded-lg gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-foreground">{user.name}</span>
                       <Badge className={user.role === 'admin'
                         ? 'bg-warm-orange text-white'
@@ -132,12 +132,12 @@ export function Users() {
                         <Badge className="bg-slate-100 text-slate-600">Inativo</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="text-sm text-muted-foreground break-all">{user.email}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Criado em {new Date(user.created_at).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                     <Button
                       variant="ghost" size="icon"
                       title={user.is_active ? 'Desativar' : 'Ativar'}

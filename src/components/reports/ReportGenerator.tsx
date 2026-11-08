@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import writeXlsxFile from 'write-excel-file/browser';
 import { Button } from '@/components/ui/button';
 import { FileDown, Users, Calendar, UserCheck } from 'lucide-react';
 
@@ -86,24 +86,23 @@ const fmtCurrency = (v?: number | null) => {
   return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-/** Aplica largura automática + header em negrito à planilha */
-const styleSheet = (ws: XLSX.WorkSheet, headers: string[]) => {
-  // largura de colunas
-  const colWidths = headers.map(h => ({ wch: Math.max(h.length + 4, 14) }));
-  ws['!cols'] = colWidths;
+const buildSheetData = (headers: string[], rows: (string | number)[][]) => {
+  const headerRow = headers.map(h => ({
+    value: h,
+    fontWeight: 'bold',
+  }));
+  const dataRows = rows.map(row =>
+    row.map(cell => ({
+      value: cell ?? '',
+      type: typeof cell === 'number' ? Number : String,
+    }))
+  );
+  return [headerRow, ...dataRows];
 };
 
-/** Cria planilha com header em negrito (usando formato de array de arrays) */
-const buildSheet = (headers: string[], rows: (string | number)[][]): XLSX.WorkSheet => {
-  const data = [headers, ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  styleSheet(ws, headers);
-  return ws;
-};
+// ── geradores de dados de abas ──────────────────────────────────────────────
 
-// ── geradores de abas ─────────────────────────────────────────────────────────
-
-const buildFamiliesSheet = (families: Family[]): XLSX.WorkSheet => {
+const getFamiliesData = (families: Family[]) => {
   const headers = [
     'ID', 'Nome do Representante', 'Data de Nasc.', 'Gênero',
     'Pessoas na Família', 'Crianças', 'Benefício Atual', 'Status',
@@ -134,10 +133,10 @@ const buildFamiliesSheet = (families: Family[]): XLSX.WorkSheet => {
     fmtDate(f.created_at),
   ] as (string | number)[]);
 
-  return buildSheet(headers, rows);
+  return buildSheetData(headers, rows);
 };
 
-const buildActionsSheet = (actions: Action[]): XLSX.WorkSheet => {
+const getActionsData = (actions: Action[]) => {
   const headers = [
     'ID', 'Título', 'Descrição', 'Data', 'Tipo', 'Status',
     'Voluntários', 'Famílias Previstas', 'Famílias Presentes (real)',
@@ -161,10 +160,10 @@ const buildActionsSheet = (actions: Action[]): XLSX.WorkSheet => {
     fmtDate(a.created_at),
   ] as (string | number)[]);
 
-  return buildSheet(headers, rows);
+  return buildSheetData(headers, rows);
 };
 
-const buildVolunteersSheet = (volunteers: Volunteer[]): XLSX.WorkSheet => {
+const getVolunteersData = (volunteers: Volunteer[]) => {
   const headers = [
     'ID', 'Nome', 'Email', 'Telefone',
     'Habilidades', 'Disponibilidade', 'Ativo?', 'Cadastrado em',
@@ -181,13 +180,7 @@ const buildVolunteersSheet = (volunteers: Volunteer[]): XLSX.WorkSheet => {
     fmtDate(v.created_at),
   ] as (string | number)[]);
 
-  return buildSheet(headers, rows);
-};
-
-// ── download ───────────────────────────────────────────────────────────────────
-
-const download = (wb: XLSX.WorkBook, filename: string) => {
-  XLSX.writeFile(wb, filename, { bookType: 'xlsx', type: 'binary' });
+  return buildSheetData(headers, rows);
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -196,30 +189,29 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export function ReportGenerator({ families, actions, volunteers }: Props) {
 
-  const handleFamilies = () => {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, buildFamiliesSheet(families), 'Famílias');
-    download(wb, `Mistura_Familias_${today()}.xlsx`);
+  const handleFamilies = async () => {
+    await writeXlsxFile(getFamiliesData(families), {
+      fileName: `Mistura_Familias_${today()}.xlsx`,
+    });
   };
 
-  const handleActions = () => {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, buildActionsSheet(actions), 'Ações');
-    download(wb, `Mistura_Acoes_${today()}.xlsx`);
+  const handleActions = async () => {
+    await writeXlsxFile(getActionsData(actions), {
+      fileName: `Mistura_Acoes_${today()}.xlsx`,
+    });
   };
 
-  const handleVolunteers = () => {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, buildVolunteersSheet(volunteers), 'Voluntários');
-    download(wb, `Mistura_Voluntarios_${today()}.xlsx`);
+  const handleVolunteers = async () => {
+    await writeXlsxFile(getVolunteersData(volunteers), {
+      fileName: `Mistura_Voluntarios_${today()}.xlsx`,
+    });
   };
 
-  const handleComplete = () => {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, buildFamiliesSheet(families),     'Famílias');
-    XLSX.utils.book_append_sheet(wb, buildActionsSheet(actions),       'Ações');
-    XLSX.utils.book_append_sheet(wb, buildVolunteersSheet(volunteers), 'Voluntários');
-    download(wb, `Mistura_Relatorio_Completo_${today()}.xlsx`);
+  const handleComplete = async () => {
+    await writeXlsxFile([getFamiliesData(families), getActionsData(actions), getVolunteersData(volunteers)], {
+      sheets: ['Famílias', 'Ações', 'Voluntários'],
+      fileName: `Mistura_Relatorio_Completo_${today()}.xlsx`,
+    });
   };
 
   const cards = [
@@ -251,19 +243,21 @@ export function ReportGenerator({ families, actions, volunteers }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {cards.map(c => (
-          <div key={c.label} className="border rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-md ${c.color} flex items-center justify-center`}>
-                <c.icon className="h-5 w-5 text-white" />
+          <div key={c.label} className="border rounded-lg p-3.5 sm:p-4 space-y-3 flex flex-col justify-between bg-card">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-md ${c.color} flex items-center justify-center shrink-0`}>
+                  <c.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                </div>
+                <p className="font-semibold text-sm text-foreground">{c.label}</p>
               </div>
-              <p className="font-semibold text-sm text-foreground">{c.label}</p>
+              <p className="text-xs text-muted-foreground">{c.desc}</p>
             </div>
-            <p className="text-xs text-muted-foreground">{c.desc}</p>
             <Button
               onClick={c.onClick}
-              className="w-full bg-warm-orange hover:bg-warm-orange/90 gap-2"
+              className="w-full bg-warm-orange hover:bg-warm-orange/90 gap-2 mt-2"
               size="sm"
             >
               <FileDown className="h-4 w-4" />
@@ -274,16 +268,16 @@ export function ReportGenerator({ families, actions, volunteers }: Props) {
       </div>
 
       {/* Relatório completo */}
-      <div className="border rounded-lg p-4 flex items-center justify-between gap-4 bg-muted/40">
+      <div className="border rounded-lg p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-muted/40">
         <div>
           <p className="font-semibold text-sm text-foreground">Relatório Completo</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Arquivo único com abas separadas: Famílias, Ações e Voluntários
           </p>
         </div>
         <Button
           onClick={handleComplete}
-          className="bg-warm-orange hover:bg-warm-orange/90 gap-2 shrink-0"
+          className="bg-warm-orange hover:bg-warm-orange/90 gap-2 w-full sm:w-auto shrink-0"
         >
           <FileDown className="h-4 w-4" />
           Baixar Relatório Completo (.xlsx)

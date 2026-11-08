@@ -233,20 +233,20 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <AlertDialogHeader>
+      <AlertDialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <AlertDialogHeader className="text-left">
           <AlertDialogTitle>{family ? 'Editar Família' : 'Cadastrar Nova Família'}</AlertDialogTitle>
           <AlertDialogDescription>
             Preencha os campos abaixo para {family ? 'editar' : 'cadastrar'} uma família.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Dados do Representante */}
           <Card>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Dados do Representante</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="p-3.5 sm:p-4">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Dados do Representante</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="representative_name">Nome do Representante</Label>
                   <Input
@@ -320,11 +320,11 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
 
           {/* Endereço */}
           <Card>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Endereço</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+            <CardContent className="p-3.5 sm:p-4">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Endereço</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="postal_code">CEP</Label>
                     <div className="relative">
                       <Input
@@ -341,33 +341,35 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
                     {cepError && <p className="text-sm text-destructive">{cepError}</p>}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="sm:col-span-2 space-y-1.5 sm:space-y-2">
                     <Label htmlFor="street">Rua</Label>
                     <Input id="street" name="street" value={formData.address.street} onChange={handleAddressChange} required />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="number">Número</Label>
                     <Input id="number" name="number" value={formData.address.number} onChange={handleAddressChange} required />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="complement">Complemento</Label>
                     <Input id="complement" name="complement" value={formData.address.complement} onChange={handleAddressChange} />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="district">Bairro</Label>
                     <Input id="district" name="district" value={formData.address.district} onChange={handleAddressChange} required />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="city">Cidade</Label>
                     <Input id="city" name="city" value={formData.address.city} onChange={handleAddressChange} required />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">Estado</Label>
-                  <Input id="state" name="state" value={formData.address.state} onChange={handleAddressChange} required />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="state">Estado</Label>
+                    <Input id="state" name="state" value={formData.address.state} onChange={handleAddressChange} required />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -419,8 +421,8 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
               </div>
               <div className="space-y-4">
                 {formData.contacts.map((contact, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
-                    <div className="space-y-2">
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-3.5 sm:p-4 border rounded-lg bg-card">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <Label>Tipo</Label>
                       <Select value={contact.contact_type} onValueChange={(v) => handleContactChange(index, 'contact_type', v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -432,17 +434,18 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <Label>Contato</Label>
                       <Input value={contact.contact_value} onChange={(e) => handleContactChange(index, 'contact_value', e.target.value)} required />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <Label>Observação</Label>
                       <Input value={contact.contact_note || ''} onChange={(e) => handleContactChange(index, 'contact_note', e.target.value)} />
                     </div>
-                    <div className="flex items-end">
-                      <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveContact(index)}>
-                        <Trash className="h-4 w-4" />
+                    <div className="flex items-end justify-end sm:justify-start pt-1 sm:pt-0">
+                      <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveContact(index)} className="w-full sm:w-auto">
+                        <Trash className="h-4 w-4 mr-1 sm:mr-0" />
+                        <span className="sm:hidden">Remover Contato</span>
                       </Button>
                     </div>
                   </div>
@@ -565,9 +568,9 @@ export function FamilyFormModal({ family, isOpen, onClose, onSave }: FamilyFormM
             </CardContent>
           </Card>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel type="button">Cancelar</AlertDialogCancel>
-            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90">
+          <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
+            <AlertDialogCancel type="button" className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <Button type="submit" className="bg-warm-orange hover:bg-warm-orange/90 w-full sm:w-auto">
               {family ? 'Salvar' : 'Cadastrar'}
             </Button>
           </AlertDialogFooter>
