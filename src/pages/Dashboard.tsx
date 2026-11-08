@@ -19,6 +19,7 @@ interface DashboardData {
     volunteers_total: number;
     single_mothers: number;
     elderly_families: number;
+    donations_received: number;
   };
   meals_by_month: { month: string; families_served: number; meals_distributed: number }[];
   families_by_action: { title: string; families_served: number; meals_distributed: number; date_label: string }[];
